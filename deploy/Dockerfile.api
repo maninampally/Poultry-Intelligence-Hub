@@ -1,0 +1,45 @@
+# Build and run the Murgi Mitra API from the monorepo root:
+#   docker build -f deploy/Dockerfile.api -t murgi-mitra-api .
+
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable
+
+COPY package.json pnpm-workspace.yaml .npmrc tsconfig.base.json tsconfig.json ./
+COPY apps/api/package.json apps/api/
+COPY packages/db/package.json packages/db/
+COPY packages/api-zod/package.json packages/api-zod/
+COPY packages/api-spec/package.json packages/api-spec/
+COPY packages/api-client-react/package.json packages/api-client-react/
+COPY scripts/package.json scripts/
+
+COPY pnpm-lock.yaml* ./
+
+RUN pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+
+COPY apps/api apps/api
+COPY packages/db packages/db
+COPY packages/api-zod packages/api-zod
+
+RUN pnpm --filter @murgi-mitra/api build
+
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup -S app && adduser -S app -G app
+
+COPY --from=builder /app/apps/api/dist ./dist
+
+USER app
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/api/healthz || exit 1
+
+CMD ["node", "--enable-source-maps", "dist/index.mjs"]

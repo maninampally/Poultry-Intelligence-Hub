@@ -1,0 +1,22 @@
+# Example systemd unit for bare-metal API deploy (no Docker).
+# Copy to /etc/systemd/system/murgi-mitra-api.service and edit paths/user.
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now murgi-mitra-api
+
+[Unit]
+Description=Murgi Mitra API
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/poultry-intelligence-hub
+EnvironmentFile=/opt/poultry-intelligence-hub/.env
+ExecStart=/usr/bin/node --enable-source-maps apps/api/dist/index.mjs
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
