@@ -1,0 +1,16 @@
+{
+  "name": "@murgi-mitra/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "hello": "tsx ./src/hello.ts",
+    "seed:murgi": "tsx ./src/seed-murgi-mitra.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@murgi-mitra/db": "workspace:*",
+    "tsx": "catalog:"
+  }
+}
