@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.gitignore
+.local
+.agents
+.config
+.cache
+*.md
+!deploy/**/*.md
+.env
+.env.*
+!.env.example
+**/.replit-artifact
