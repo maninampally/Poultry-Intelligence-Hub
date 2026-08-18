@@ -1,0 +1,1256 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Murgi Mitra — Broiler farm management API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dashboard
+    description: Cross-farm dashboard summaries
+  - name: farms
+    description: Farms & sheds
+  - name: batches
+    description: Grow-out batches
+  - name: mortality
+    description: Mortality logs
+  - name: feed
+    description: Feed intake logs
+  - name: weight
+    description: Body weight samples
+  - name: costs
+    description: Production cost entries
+  - name: vaccinations
+    description: Health & vaccination records
+  - name: sales
+    description: Sale records
+  - name: insights
+    description: AI insights & alerts
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/overview:
+    get:
+      operationId: getDashboardOverview
+      tags: [dashboard]
+      summary: Cross-farm KPI overview
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOverview"
+
+  /dashboard/activity:
+    get:
+      operationId: getDashboardActivity
+      tags: [dashboard]
+      summary: Recent activity feed across all farms
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /farms:
+    get:
+      operationId: listFarms
+      tags: [farms]
+      summary: List farms
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Farm"
+    post:
+      operationId: createFarm
+      tags: [farms]
+      summary: Create a farm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFarmInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Farm"
+
+  /farms/{farmId}:
+    get:
+      operationId: getFarm
+      tags: [farms]
+      parameters:
+        - in: path
+          name: farmId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FarmDetail"
+
+  /farms/{farmId}/sheds:
+    get:
+      operationId: listSheds
+      tags: [farms]
+      parameters:
+        - in: path
+          name: farmId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Shed"
+    post:
+      operationId: createShed
+      tags: [farms]
+      parameters:
+        - in: path
+          name: farmId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShedInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shed"
+
+  /batches:
+    get:
+      operationId: listBatches
+      tags: [batches]
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [draft, active, harvesting, closed]
+        - in: query
+          name: farmId
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BatchListItem"
+    post:
+      operationId: createBatch
+      tags: [batches]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBatchInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batch"
+
+  /batches/{batchId}:
+    get:
+      operationId: getBatch
+      tags: [batches]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batch"
+    patch:
+      operationId: updateBatchStatus
+      tags: [batches]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBatchStatusInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batch"
+
+  /batches/{batchId}/summary:
+    get:
+      operationId: getBatchSummary
+      tags: [batches]
+      summary: Full dashboard summary for a batch
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchSummary"
+
+  /batches/{batchId}/mortality:
+    get:
+      operationId: listMortality
+      tags: [mortality]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MortalityLog"
+    post:
+      operationId: logMortality
+      tags: [mortality]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMortalityInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortalityLog"
+
+  /batches/{batchId}/mortality/trend:
+    get:
+      operationId: getMortalityTrend
+      tags: [mortality]
+      summary: 7-day rolling mortality trend
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendPoint"
+
+  /batches/{batchId}/feed:
+    get:
+      operationId: listFeed
+      tags: [feed]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FeedLog"
+    post:
+      operationId: logFeed
+      tags: [feed]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeedInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedLog"
+
+  /batches/{batchId}/feed/fcr:
+    get:
+      operationId: getFcrTrend
+      tags: [feed]
+      summary: Daily FCR trend for a batch
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FcrSummary"
+
+  /batches/{batchId}/weight:
+    get:
+      operationId: listWeight
+      tags: [weight]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeightLog"
+    post:
+      operationId: logWeight
+      tags: [weight]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWeightInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeightLog"
+
+  /batches/{batchId}/weight/curve:
+    get:
+      operationId: getGrowthCurve
+      tags: [weight]
+      summary: Actual weight curve vs Cobb 500 standard
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GrowthCurvePoint"
+
+  /batches/{batchId}/costs:
+    get:
+      operationId: listCosts
+      tags: [costs]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CostEntry"
+    post:
+      operationId: logCost
+      tags: [costs]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostEntry"
+
+  /batches/{batchId}/costs/summary:
+    get:
+      operationId: getCostSummary
+      tags: [costs]
+      summary: Cost breakdown with break-even projection
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostSummary"
+
+  /batches/{batchId}/vaccinations:
+    get:
+      operationId: listVaccinations
+      tags: [vaccinations]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VaccinationLog"
+    post:
+      operationId: logVaccination
+      tags: [vaccinations]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVaccinationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaccinationLog"
+
+  /batches/{batchId}/vaccinations/schedule:
+    get:
+      operationId: getVaccinationSchedule
+      tags: [vaccinations]
+      summary: Auto-generated vaccine schedule with status
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScheduledVaccine"
+
+  /batches/{batchId}/sales:
+    get:
+      operationId: listSales
+      tags: [sales]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SaleRecord"
+    post:
+      operationId: logSale
+      tags: [sales]
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSaleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaleRecord"
+
+  /batches/{batchId}/insights:
+    get:
+      operationId: getInsights
+      tags: [insights]
+      summary: AI-generated insights, alerts, and tip-of-the-day
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightsBundle"
+
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [insights]
+      summary: Active alerts across all batches
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertLog"
+
+  /alerts/{alertId}/resolve:
+    post:
+      operationId: resolveAlert
+      tags: [insights]
+      summary: Mark an alert as resolved
+      parameters:
+        - in: path
+          name: alertId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertLog"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    DashboardOverview:
+      type: object
+      required:
+        - totalFarms
+        - totalSheds
+        - activeBatches
+        - totalLiveBirds
+        - avgMortalityPct
+        - avgFcr
+        - projectedRevenue
+        - openAlerts
+        - mortalityToday
+        - feedConsumedToday
+        - kpiTrend
+      properties:
+        totalFarms: { type: integer }
+        totalSheds: { type: integer }
+        activeBatches: { type: integer }
+        totalLiveBirds: { type: integer }
+        avgMortalityPct: { type: number }
+        avgFcr: { type: number }
+        projectedRevenue: { type: number }
+        openAlerts: { type: integer }
+        mortalityToday: { type: integer }
+        feedConsumedToday: { type: number }
+        kpiTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+
+    ActivityItem:
+      type: object
+      required: [id, kind, batchCode, farmName, message, timestamp]
+      properties:
+        id: { type: string }
+        kind:
+          type: string
+          enum: [mortality, feed, weight, cost, vaccination, sale, alert, batch]
+        batchCode: { type: string }
+        farmName: { type: string }
+        message: { type: string }
+        timestamp: { type: string, format: date-time }
+        severity:
+          type: ["string", "null"]
+          enum: [info, warning, critical, null]
+
+    Farm:
+      type: object
+      required: [id, name, state, district, ownerName, sheds, activeBatches, totalCapacity]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        state: { type: string }
+        district: { type: string }
+        village:
+          type: ["string", "null"]
+        ownerName: { type: string }
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        sheds: { type: integer }
+        activeBatches: { type: integer }
+        totalCapacity: { type: integer }
+        createdAt: { type: string, format: date-time }
+
+    FarmDetail:
+      allOf:
+        - $ref: "#/components/schemas/Farm"
+        - type: object
+          required: [shedList, batchList]
+          properties:
+            shedList:
+              type: array
+              items:
+                $ref: "#/components/schemas/Shed"
+            batchList:
+              type: array
+              items:
+                $ref: "#/components/schemas/BatchListItem"
+
+    CreateFarmInput:
+      type: object
+      required: [name, state, district, ownerName]
+      properties:
+        name: { type: string }
+        state: { type: string }
+        district: { type: string }
+        village:
+          type: ["string", "null"]
+        ownerName: { type: string }
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+
+    Shed:
+      type: object
+      required: [id, farmId, name, capacity, areaSqft]
+      properties:
+        id: { type: string }
+        farmId: { type: string }
+        name: { type: string }
+        capacity: { type: integer }
+        areaSqft: { type: integer }
+
+    CreateShedInput:
+      type: object
+      required: [name, capacity, areaSqft]
+      properties:
+        name: { type: string }
+        capacity: { type: integer }
+        areaSqft: { type: integer }
+
+    BatchListItem:
+      type: object
+      required:
+        - id
+        - batchCode
+        - farmId
+        - farmName
+        - shedId
+        - shedName
+        - startDate
+        - dayOfBatch
+        - placementCount
+        - currentFlock
+        - mortalityPct
+        - fcr
+        - avgWeight
+        - status
+        - breed
+      properties:
+        id: { type: string }
+        batchCode: { type: string }
+        farmId: { type: string }
+        farmName: { type: string }
+        shedId: { type: string }
+        shedName: { type: string }
+        startDate: { type: string, format: date-time }
+        targetSaleDate:
+          type: ["string", "null"]
+          format: date-time
+        dayOfBatch: { type: integer }
+        placementCount: { type: integer }
+        currentFlock: { type: integer }
+        mortalityPct: { type: number }
+        fcr: { type: number }
+        avgWeight: { type: number }
+        breed: { type: string }
+        status:
+          type: string
+          enum: [draft, active, harvesting, closed]
+        healthScore:
+          type: ["integer", "null"]
+
+    Batch:
+      type: object
+      required:
+        - id
+        - batchCode
+        - farmId
+        - shedId
+        - startDate
+        - placementCount
+        - chickSupplier
+        - breed
+        - contractType
+        - status
+      properties:
+        id: { type: string }
+        batchCode: { type: string }
+        farmId: { type: string }
+        shedId: { type: string }
+        startDate: { type: string, format: date-time }
+        targetSaleDate:
+          type: ["string", "null"]
+          format: date-time
+        placementCount: { type: integer }
+        chickSupplier: { type: string }
+        breed: { type: string }
+        contractType:
+          type: string
+          enum: [own, integrator]
+        status:
+          type: string
+          enum: [draft, active, harvesting, closed]
+        notes:
+          type: ["string", "null"]
+
+    CreateBatchInput:
+      type: object
+      required: [farmId, shedId, startDate, placementCount, chickSupplier, breed, contractType]
+      properties:
+        farmId: { type: string }
+        shedId: { type: string }
+        startDate: { type: string, format: date-time }
+        targetSaleDate:
+          type: ["string", "null"]
+          format: date-time
+        placementCount: { type: integer }
+        chickSupplier: { type: string }
+        breed: { type: string }
+        contractType:
+          type: string
+          enum: [own, integrator]
+        notes:
+          type: ["string", "null"]
+
+    UpdateBatchStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [draft, active, harvesting, closed]
+
+    BatchSummary:
+      type: object
+      required:
+        - batch
+        - dayOfBatch
+        - currentFlock
+        - mortalityPct
+        - mortalityToday
+        - fcr
+        - avgWeight
+        - standardWeight
+        - weightDeviationPct
+        - totalCost
+        - costPerBird
+        - projectedMargin
+        - breakEvenPricePerKg
+        - healthScore
+        - feedConsumedTotal
+        - mortalityTrend
+        - growthCurve
+        - costBreakdown
+      properties:
+        batch:
+          $ref: "#/components/schemas/Batch"
+        farmName: { type: string }
+        shedName: { type: string }
+        dayOfBatch: { type: integer }
+        currentFlock: { type: integer }
+        mortalityPct: { type: number }
+        mortalityToday: { type: integer }
+        fcr: { type: number }
+        avgWeight: { type: number }
+        standardWeight: { type: number }
+        weightDeviationPct: { type: number }
+        totalCost: { type: number }
+        costPerBird: { type: number }
+        projectedMargin: { type: number }
+        breakEvenPricePerKg: { type: number }
+        healthScore: { type: integer }
+        feedConsumedTotal: { type: number }
+        mortalityTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+        growthCurve:
+          type: array
+          items:
+            $ref: "#/components/schemas/GrowthCurvePoint"
+        costBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CostBreakdownItem"
+
+    MortalityLog:
+      type: object
+      required: [id, batchId, shedId, date, shift, count, cause]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        shedId: { type: string }
+        date: { type: string, format: date-time }
+        shift:
+          type: string
+          enum: [morning, evening]
+        count: { type: integer }
+        cause:
+          type: string
+          enum: [respiratory, heat_stress, ascites, unknown, other]
+        notes:
+          type: ["string", "null"]
+        photoUrl:
+          type: ["string", "null"]
+
+    CreateMortalityInput:
+      type: object
+      required: [shedId, date, shift, count, cause]
+      properties:
+        shedId: { type: string }
+        date: { type: string, format: date-time }
+        shift:
+          type: string
+          enum: [morning, evening]
+        count: { type: integer }
+        cause:
+          type: string
+          enum: [respiratory, heat_stress, ascites, unknown, other]
+        notes:
+          type: ["string", "null"]
+
+    TrendPoint:
+      type: object
+      required: [date, value]
+      properties:
+        date: { type: string, format: date-time }
+        value: { type: number }
+        secondaryValue:
+          type: ["number", "null"]
+        label:
+          type: ["string", "null"]
+
+    FeedLog:
+      type: object
+      required: [id, batchId, shedId, date, shift, feedType, kgGiven, kgReturned]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        shedId: { type: string }
+        date: { type: string, format: date-time }
+        shift:
+          type: string
+          enum: [morning, afternoon, evening]
+        feedType:
+          type: string
+          enum: [pre_starter, starter, grower, finisher]
+        feedBrand:
+          type: ["string", "null"]
+        bagNumber:
+          type: ["string", "null"]
+        kgGiven: { type: number }
+        kgReturned: { type: number }
+
+    CreateFeedInput:
+      type: object
+      required: [shedId, date, shift, feedType, kgGiven, kgReturned]
+      properties:
+        shedId: { type: string }
+        date: { type: string, format: date-time }
+        shift:
+          type: string
+          enum: [morning, afternoon, evening]
+        feedType:
+          type: string
+          enum: [pre_starter, starter, grower, finisher]
+        feedBrand:
+          type: ["string", "null"]
+        bagNumber:
+          type: ["string", "null"]
+        kgGiven: { type: number }
+        kgReturned: { type: number }
+
+    FcrSummary:
+      type: object
+      required: [currentFcr, targetFcr, totalFeedKg, totalLiveWeightGainKg, dailyTrend]
+      properties:
+        currentFcr: { type: number }
+        targetFcr: { type: number }
+        totalFeedKg: { type: number }
+        totalLiveWeightGainKg: { type: number }
+        dailyTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+
+    WeightLog:
+      type: object
+      required: [id, batchId, shedId, date, sampleSize, totalWeightKg, avgWeightKg]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        shedId: { type: string }
+        date: { type: string, format: date-time }
+        sampleSize: { type: integer }
+        totalWeightKg: { type: number }
+        avgWeightKg: { type: number }
+
+    CreateWeightInput:
+      type: object
+      required: [shedId, date, sampleSize, totalWeightKg]
+      properties:
+        shedId: { type: string }
+        date: { type: string, format: date-time }
+        sampleSize: { type: integer }
+        totalWeightKg: { type: number }
+
+    GrowthCurvePoint:
+      type: object
+      required: [day, actualWeight, standardWeight]
+      properties:
+        day: { type: integer }
+        actualWeight: { type: number }
+        standardWeight: { type: number }
+        deviationPct:
+          type: ["number", "null"]
+
+    CostEntry:
+      type: object
+      required: [id, batchId, category, subCategory, amount, date]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        category:
+          type: string
+          enum: [chick, feed, medicine, labor, utilities, equipment, misc]
+        subCategory: { type: string }
+        amount: { type: number }
+        quantity:
+          type: ["number", "null"]
+        unit:
+          type: ["string", "null"]
+        date: { type: string, format: date-time }
+        note:
+          type: ["string", "null"]
+
+    CreateCostInput:
+      type: object
+      required: [category, subCategory, amount, date]
+      properties:
+        category:
+          type: string
+          enum: [chick, feed, medicine, labor, utilities, equipment, misc]
+        subCategory: { type: string }
+        amount: { type: number }
+        quantity:
+          type: ["number", "null"]
+        unit:
+          type: ["string", "null"]
+        date: { type: string, format: date-time }
+        note:
+          type: ["string", "null"]
+
+    CostBreakdownItem:
+      type: object
+      required: [category, amount, pctOfTotal]
+      properties:
+        category: { type: string }
+        amount: { type: number }
+        pctOfTotal: { type: number }
+
+    CostSummary:
+      type: object
+      required:
+        - totalCost
+        - costPerBirdToday
+        - projectedTotalCost
+        - projectedCostPerBird
+        - breakEvenPricePerKg
+        - breakdown
+        - history
+      properties:
+        totalCost: { type: number }
+        costPerBirdToday: { type: number }
+        projectedTotalCost: { type: number }
+        projectedCostPerBird: { type: number }
+        breakEvenPricePerKg: { type: number }
+        breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CostBreakdownItem"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+
+    VaccinationLog:
+      type: object
+      required: [id, batchId, vaccineName, doseDate, doseNumber]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        vaccineName: { type: string }
+        doseDate: { type: string, format: date-time }
+        doseNumber: { type: integer }
+        cost:
+          type: ["number", "null"]
+        batchNo:
+          type: ["string", "null"]
+        route:
+          type: ["string", "null"]
+        administeredBy:
+          type: ["string", "null"]
+
+    CreateVaccinationInput:
+      type: object
+      required: [vaccineName, doseDate, doseNumber]
+      properties:
+        vaccineName: { type: string }
+        doseDate: { type: string, format: date-time }
+        doseNumber: { type: integer }
+        cost:
+          type: ["number", "null"]
+        batchNo:
+          type: ["string", "null"]
+        route:
+          type: ["string", "null"]
+        administeredBy:
+          type: ["string", "null"]
+
+    ScheduledVaccine:
+      type: object
+      required: [vaccineName, dueDay, dueDate, status]
+      properties:
+        vaccineName: { type: string }
+        dueDay: { type: integer }
+        dueDate: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [completed, due, upcoming, overdue]
+        route: { type: string }
+        notes:
+          type: ["string", "null"]
+
+    SaleRecord:
+      type: object
+      required: [id, batchId, saleDate, birdsSold, totalWeightKg, pricePerKg, buyer]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        saleDate: { type: string, format: date-time }
+        birdsSold: { type: integer }
+        totalWeightKg: { type: number }
+        pricePerKg: { type: number }
+        buyer: { type: string }
+        revenue: { type: number }
+
+    CreateSaleInput:
+      type: object
+      required: [saleDate, birdsSold, totalWeightKg, pricePerKg, buyer]
+      properties:
+        saleDate: { type: string, format: date-time }
+        birdsSold: { type: integer }
+        totalWeightKg: { type: number }
+        pricePerKg: { type: number }
+        buyer: { type: string }
+
+    AlertLog:
+      type: object
+      required: [id, batchId, batchCode, farmName, alertType, severity, messageEn, messageHi, createdAt]
+      properties:
+        id: { type: string }
+        batchId: { type: string }
+        batchCode: { type: string }
+        farmName: { type: string }
+        alertType:
+          type: string
+          enum: [mortality_spike, feed_drop, weight_deviation, cost_overrun, vaccine_due, withdrawal_period, health_risk]
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        messageEn: { type: string }
+        messageHi: { type: string }
+        recommendation:
+          type: ["string", "null"]
+        createdAt: { type: string, format: date-time }
+        resolvedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    InsightsBundle:
+      type: object
+      required:
+        - healthScore
+        - tipOfTheDay
+        - tipOfTheDayHi
+        - alerts
+        - benchmarks
+        - predictedHarvestDate
+        - projectedNetMargin
+      properties:
+        healthScore: { type: integer }
+        tipOfTheDay: { type: string }
+        tipOfTheDayHi: { type: string }
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertLog"
+        benchmarks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Benchmark"
+        predictedHarvestDate: { type: string, format: date-time }
+        projectedNetMargin: { type: number }
+
+    Benchmark:
+      type: object
+      required: [metric, yourValue, regionalAverage, percentile, comparison]
+      properties:
+        metric: { type: string }
+        yourValue: { type: number }
+        regionalAverage: { type: number }
+        percentile: { type: integer }
+        comparison:
+          type: string
+          enum: [better, average, worse]
