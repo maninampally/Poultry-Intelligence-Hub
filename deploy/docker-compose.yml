@@ -5,8 +5,9 @@
 #   docker compose -f deploy/docker-compose.yml up -d --build
 #
 # First-time DB schema (from repo root, with DATABASE_URL in .env):
-#   pnpm install && pnpm run db:push
+#   pnpm install && pnpm run db:migrate
 #   pnpm run seed
+# Prefer Supabase: set DATABASE_URL to your project URI and skip the db service.
 
 services:
   db:

@@ -15,7 +15,7 @@ import {
 
 async function clearAll() {
   await pool.query(
-    "TRUNCATE TABLE alert_logs, sale_records, vaccination_logs, cost_entries, weight_logs, feed_logs, mortality_logs, batches, sheds, farms RESTART IDENTITY CASCADE",
+    "TRUNCATE TABLE public.tenant_memberships, public.farm_memberships, public.tenants, alert_logs, sale_records, vaccination_logs, cost_entries, weight_logs, feed_logs, mortality_logs, batches, sheds, farms RESTART IDENTITY CASCADE",
   );
 }
 
@@ -31,6 +31,16 @@ async function seed() {
   await clearAll();
 
   console.log("Seeding farms...");
+  const tenantId = "00000000-0000-4000-8000-000000000001";
+  const ownerUserId = "00000000-0000-4000-8000-000000000002";
+  await pool.query(
+    "INSERT INTO public.tenants (id, name) VALUES ($1, $2)",
+    [tenantId, "Murgi Mitra Pilot Tenant"],
+  );
+  await pool.query(
+    "INSERT INTO public.tenant_memberships (tenant_id, user_id, role) VALUES ($1, $2, 'owner')",
+    [tenantId, ownerUserId],
+  );
   const farmTN = await insertFarm({
     name: "Selvam Poultry Farm",
     state: "Tamil Nadu",
@@ -60,6 +70,16 @@ async function seed() {
     latitude: 30.37,
     longitude: 75.55,
   });
+  await pool.query(
+    "UPDATE public.farms SET tenant_id = $1 WHERE id IN ($2, $3, $4)",
+    [tenantId, farmTN.id, farmTS.id, farmPB.id],
+  );
+  for (const farmId of [farmTN.id, farmTS.id, farmPB.id]) {
+    await pool.query(
+      "INSERT INTO public.farm_memberships (farm_id, user_id, tenant_id, role) VALUES ($1, $2, $3, 'owner')",
+      [farmId, ownerUserId, tenantId],
+    );
+  }
 
   console.log("Seeding sheds...");
   const shedTN1 = await insertShed({ farmId: farmTN.id, name: "Shed A1", capacity: 8000, areaSqft: 8000 });

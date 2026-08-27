@@ -1,42 +1,55 @@
 # Deployment
 
-Self-hosted setup for **Poultry Intelligence Hub** (Murgi Mitra).
+Self-hosted optional stack for **Poultry Intelligence Hub** (Murgi Mitra).
 
-## Quick start (Docker Compose)
+**Preferred DB for development:** [Supabase](https://supabase.com) — set `DATABASE_URL` in `.env` and skip the Compose `db` service.
+
+## Local API + web against Supabase
+
+```bash
+cp .env.example .env
+# Paste Supabase Postgres URI into DATABASE_URL
+
+corepack pnpm install
+corepack pnpm run db:migrate
+corepack pnpm run seed
+corepack pnpm run dev:api
+corepack pnpm run dev:web
+```
+
+## Docker Compose (optional local Postgres)
 
 From the **repository root**:
 
 ```bash
 cp .env.example .env
-# Edit .env — set POSTGRES_PASSWORD at minimum
+# For Compose DB, set:
+# DATABASE_URL=postgresql://murgi:changeme@localhost:5432/murgi_mitra
 
 docker compose -f deploy/docker-compose.yml up -d db
-pnpm install
-pnpm run db:push          # applies schema (DATABASE_URL → localhost:5432)
-pnpm run seed             # optional demo data
+corepack pnpm install
+corepack pnpm run db:migrate
+corepack pnpm run seed
 
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
-Open `http://localhost` (or the port set in `HTTP_PORT`).
-
-Services:
+Open `http://localhost` (or `HTTP_PORT`).
 
 | Service | Role |
 |---------|------|
-| `db` | PostgreSQL 16 |
-| `api` | Express API on internal port 8080 |
-| `web` | nginx: static SPA + `/api` proxy |
+| `db` | PostgreSQL 16 (optional if using Supabase) |
+| `api` | Express API |
+| `web` | nginx: SPA + `/api` proxy |
 
-Health check: `GET /api/healthz`
+Health: `GET /api/healthz`
 
-## Environment variables
+## Environment
 
-See [`.env.example`](../.env.example). Minimum for production:
+See [`.env.example`](../.env.example). Required:
 
-- `DATABASE_URL`
+- `DATABASE_URL` (Supabase or local Postgres)
 - `PORT` (API, default `8080`)
-- `POSTGRES_*` (when using Compose)
 
 ## Build images only
 
@@ -45,17 +58,10 @@ docker build -f deploy/Dockerfile.api -t murgi-mitra-api .
 docker build -f deploy/Dockerfile.web -t murgi-mitra-web .
 ```
 
-## Bare metal (no Docker)
+## Bare metal
 
-1. Install Node 22+, pnpm, PostgreSQL 16.
-2. Copy `.env.example` → `.env` and set `DATABASE_URL`.
-3. `pnpm install && pnpm run build`
-4. Run API: `pnpm --filter @murgi-mitra/api start`
-5. Build web: `pnpm --filter @murgi-mitra/web build`
-6. Serve `apps/web/dist/public` with nginx using [`nginx.conf`](./nginx.conf) — point `proxy_pass` to `http://127.0.0.1:8080`.
-
-Optional: [`systemd/murgi-mitra-api.service.example`](./systemd/murgi-mitra-api.service.example)
-
-## TLS / custom domain
-
-Put Caddy or nginx in front of the `web` container (or terminate TLS on your host) and forward to port 80. No app changes required — the API client uses relative `/api` paths.
+1. Node 22+, pnpm, Postgres (or Supabase).
+2. `.env` with `DATABASE_URL`.
+3. `pnpm install && pnpm run db:migrate && pnpm run build`
+4. API: `pnpm --filter @murgi-mitra/api start`
+5. Serve `apps/web` build with nginx ([`nginx.conf`](./nginx.conf)).

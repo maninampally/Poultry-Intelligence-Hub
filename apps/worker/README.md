@@ -1,13 +1,12 @@
-# Worker Service Scaffold
+# Worker (scaffold)
 
-This folder is reserved for alerts, sync jobs, and background processing for the poultry intelligence system.
+**Status: scaffold only — no job runner yet.**
 
-## Planned responsibilities
+Reserved for:
 
-- daily alert evaluation
-- scheduled reminders
-- report generation
-- data sync processing
-- AI-driven recommendation jobs
+- Alert evaluation
+- Scheduled reminders
+- Report generation
+- Sync / AI recommendation jobs
 
-This set-up keeps the mobile and web code isolated while the system grows toward the architecture in the product spec.
+`src/index.ts` is a stub. Background work is not scheduled or queued.
