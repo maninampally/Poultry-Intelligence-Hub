@@ -1,51 +1,78 @@
 # Poultry Intelligence Hub
 
-Murgi Mitra — broiler farm management for Indian poultry operations.
+**Murgi Mitra** — broiler farm management for Indian poultry operations.
 
-pnpm workspace monorepo. TypeScript throughout.
+pnpm + TypeScript monorepo. Postgres (Supabase-compatible).
 
-## Layout
+## Active stack (use these)
 
 ```
-apps/web                 React + Vite farmer dashboard
-apps/api                 Express API
-packages/db              PostgreSQL client + .sql query files (packages/db/queries/**)
-packages/api-spec        OpenAPI contract and Orval codegen
-packages/api-zod         Generated Zod schemas
-packages/api-client-react  Generated React Query hooks
-scripts                  Seed and one-off jobs
-deploy/                  Docker Compose, nginx, systemd examples
-docs/                    Architecture notes
+apps/web                   Farmer dashboard (React 19 + Vite)
+apps/api                   REST API (Express 5)
+packages/db                Postgres client, .sql queries, migrations
+packages/api-spec          OpenAPI contract + Orval codegen
+packages/api-zod           Generated Zod validators (API)
+packages/api-client-react  Generated React Query hooks (web)
+scripts                    Seed data
+deploy/                    Docker Compose / nginx examples
+docs/                      Architecture notes
 ```
 
-## Stack
+## Scaffolds (not production yet)
 
-- **Package manager:** pnpm
-- **API:** Express 5
-- **Database:** PostgreSQL (Supabase-compatible) via `pg`, raw SQL in `packages/db/queries/**`
-- **Validation:** Zod
-- **Codegen:** Orval (from `packages/api-spec/openapi.yaml`)
-- **Web:** React 19, Vite, TanStack Query, wouter, shadcn/ui
+```
+apps/mobile    Expo/RN farmer app — offline sync stub, not wired to API
+apps/worker    Background jobs stub — no queue yet
+```
 
 ## Commands
 
 ```bash
-pnpm install
-pnpm run typecheck
-pnpm run build
-pnpm run dev:web          # Vite on http://127.0.0.1:5173
-pnpm run dev:api
-pnpm run db:migrate       # apply packages/db/migrations/001_init_schema.sql
-pnpm run codegen          # regenerate API client + Zod
-pnpm run seed             # sample farms, sheds, batches
+cp .env.example .env
+# Set DATABASE_URL to your Supabase Postgres URI
+
+corepack pnpm install
+corepack pnpm run db:migrate   # applies packages/db/migrations/001_init_schema.sql
+corepack pnpm run seed         # sample farms / batches
+corepack pnpm run dev:api      # http://127.0.0.1:8080
+corepack pnpm run dev:web      # http://127.0.0.1:5173
+corepack pnpm run typecheck
+corepack pnpm run build
+corepack pnpm run codegen      # regenerate client + Zod from OpenAPI
 ```
 
-Set `DATABASE_URL` before `db:migrate` or API start — point it at your Supabase Postgres connection string (or any Postgres instance). Copy [`.env.example`](./.env.example) to `.env`.
+## Data flow
 
-Every query the API runs lives as a plain `.sql` file under `packages/db/queries/**` (one file per query, `$1`/`$2` params). `packages/db/src/queries/*.ts` just loads and executes them via `pg` — no ORM.
+```
+Browser (apps/web)
+   → /api/* (Vite proxy or nginx)
+   → Express (apps/api)
+   → packages/db (.sql files)
+   → PostgreSQL / Supabase
+```
 
-## Self-hosted deploy
+Contract-first: edit `packages/api-spec/openapi.yaml`, then `pnpm run codegen`.
 
-See **[deploy/README.md](./deploy/README.md)** for Docker Compose (Postgres + API + nginx).
+## Database
 
-Product spec: [MVP.md](./MVP.md) · Architecture: [docs/architecture.md](./docs/architecture.md)
+Point `DATABASE_URL` at **Supabase** (Project Settings → Database → URI).  
+Migration: [`packages/db/migrations/001_init_schema.sql`](packages/db/migrations/001_init_schema.sql).  
+Queries live as plain `.sql` under `packages/db/queries/**` — no ORM.
+
+Optional local Postgres: see [`deploy/README.md`](deploy/README.md).
+
+## Migration status
+
+Mobile sync now targets the FastAPI migration service through
+`EXPO_PUBLIC_API_URL`. Express remains the legacy web dashboard API until
+Phase 7 parity gates are complete. See
+[`docs/runbooks/phase-7-cutover.md`](docs/runbooks/phase-7-cutover.md).
+
+## Not done yet
+
+- Auth / tenant isolation
+- Automated tests & CI
+- Mobile ↔ API sync
+- Worker jobs
+
+Architecture: [`docs/architecture.md`](docs/architecture.md)
