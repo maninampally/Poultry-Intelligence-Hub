@@ -10,6 +10,12 @@ out-tsc
 
 # dependencies
 node_modules
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
 
 # IDEs and editors
 /.idea
@@ -50,8 +56,5 @@ Thumbs.db
 .config/
 **/.replit-artifact
 
-MVP.md
 murgi-mitra-project-structure.md
 murgi-mitra-tech-stack.md
-
-REPO_PLAN.md
