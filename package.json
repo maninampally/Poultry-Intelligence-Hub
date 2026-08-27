@@ -8,7 +8,7 @@
     "dev:web": "corepack pnpm --filter @murgi-mitra/web dev",
     "dev:api": "corepack pnpm --filter @murgi-mitra/api dev",
     "build": "corepack pnpm run typecheck && corepack pnpm -r --if-present run build",
-    "typecheck:libs": "tsc --build",
+    "typecheck:libs": "tsc --build --force",
     "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm -r --filter \"./apps/**\" --filter \"./scripts\" --if-present run typecheck",
     "db:migrate": "corepack pnpm --filter @murgi-mitra/db migrate",
     "codegen": "corepack pnpm --filter @murgi-mitra/api-spec codegen",

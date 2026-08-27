@@ -9,6 +9,8 @@ export type ResourceName =
 
 export interface ChangeRecord {
   id: string;
+  operationId: string;
+  idempotencyKey: string;
   resource: ResourceName;
   action: 'create' | 'update' | 'delete';
   entityId: string;

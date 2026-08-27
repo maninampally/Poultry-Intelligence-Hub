@@ -1,6 +1,6 @@
+import { supabase } from '../../core/auth/supabase';
 import { session, type Session } from '../../core/auth/session';
-import { tokenStore } from '../../core/auth/token.store';
-import { authenticateUser } from './auth.store';
+import { authenticateUser, unauthenticateUser } from './auth.store';
 import type { AuthSession, AuthUser } from './auth.types';
 
 export interface LoginParams {
@@ -9,30 +9,40 @@ export interface LoginParams {
 }
 
 export class AuthService {
-  static async requestOtp(phone: string): Promise<string> {
-    if (!phone || phone.trim().length < 8) {
+  static pendingPhone: string | null = null;
+
+  static async requestOtp(phone: string): Promise<void> {
+    const normalized = phone.trim();
+    if (!/^\+[1-9]\d{7,14}$/.test(normalized)) {
       throw new Error('Enter a valid phone number');
     }
-
-    return `otp_for_${phone.replace(/\D+/g, '').slice(-4)}`;
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalized });
+    if (error) throw new Error(error.message);
+    this.pendingPhone = normalized;
   }
 
   static async verifyOtp(params: LoginParams): Promise<AuthSession> {
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone: params.phone.trim(),
+      token: params.otp.trim(),
+      type: 'sms',
+    });
+    if (error || !data.session || !data.user) {
+      throw new Error(error?.message ?? 'OTP verification failed');
+    }
     const user: AuthUser = {
-      id: `user_${params.phone.replace(/\D+/g, '')}`,
+      id: data.user.id,
       phone: params.phone,
-      name: 'Local farmer',
+      name: String(data.user.user_metadata?.name ?? 'Farmer'),
     };
-
-    const token = `local_token_${params.otp}`;
+    const token = data.session.access_token;
     const nextSession: Session = {
       userId: user.id,
       token,
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      expiresAt: new Date(data.session.expires_at ? data.session.expires_at * 1000 : Date.now()).toISOString(),
     };
 
     session.set(nextSession);
-    await tokenStore.set(token);
     authenticateUser(user.id, token);
 
     return {
@@ -40,5 +50,19 @@ export class AuthService {
       token,
       expiresAt: nextSession.expiresAt,
     };
+  }
+
+  static async restoreSession(): Promise<void> {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      authenticateUser(data.session.user.id, data.session.access_token);
+    }
+  }
+
+  static async signOut(): Promise<void> {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
+    session.clear();
+    unauthenticateUser();
   }
 }

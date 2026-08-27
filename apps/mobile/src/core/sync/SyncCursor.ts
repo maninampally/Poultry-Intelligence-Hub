@@ -1,9 +1,11 @@
 export class SyncCursor {
+  private static value: string | null = null;
+
   static async load(): Promise<string | null> {
-    return null;
+    return this.value;
   }
 
   static async save(cursor: string): Promise<void> {
-    return undefined;
+    this.value = cursor;
   }
 }

@@ -1,11 +1,12 @@
-let currentToken: string | null = null;
-
 export const tokenStore = {
-  get: async (): Promise<string | null> => currentToken,
-  set: async (token: string): Promise<void> => {
-    currentToken = token;
+  get: async (): Promise<string | null> => {
+    const { supabase } = await import('./supabase');
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
   },
+  set: async (_token: string): Promise<void> => undefined,
   clear: async (): Promise<void> => {
-    currentToken = null;
+    const { supabase } = await import('./supabase');
+    await supabase.auth.signOut();
   },
 };

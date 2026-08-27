@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "murgi-mitra-worker"
+version = "0.1.0"
+description = "Celery entrypoint for Murgi Mitra background jobs."
+requires-python = ">=3.11"
+dependencies = [
+  "celery>=5.4,<6",
+  "murgi-mitra-backend-core @ file:../../packages/backend-core",
+]
+
+[tool.setuptools]
+packages = ["app"]
