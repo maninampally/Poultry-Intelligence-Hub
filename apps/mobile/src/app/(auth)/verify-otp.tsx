@@ -10,7 +10,9 @@ export default function VerifyOtpRoute(): ReactNode {
 
   const onSubmit = async () => {
     try {
-      const session = await AuthService.verifyOtp({ phone: '+91 98765 43210', otp });
+      const phone = AuthService.pendingPhone;
+      if (!phone) throw new Error('Request an OTP first');
+      const session = await AuthService.verifyOtp({ phone, otp });
       setMessage(`Signed in as ${session.user.name}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Verification failed');

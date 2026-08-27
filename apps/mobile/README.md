@@ -1,20 +1,13 @@
-# Mobile App Scaffold
+# Mobile app (scaffold)
 
-This folder is reserved for the farmer-facing React Native / Expo app.
+**Status: scaffold only — not wired to the production API.**
 
-## Purpose
+Planned farmer-facing React Native / Expo app for:
 
-- offline-first daily farm recording
-- mortality, feed, weight, and cost entry
-- multilingual and voice-first UX
-- local sync with the backend
+- Offline-first daily logging (mortality, feed, weight, cost)
+- Local SQLite + sync outbox
+- OTP auth, i18n, voice capture
 
-## Planned structure
+Code under `src/` is exploratory. Auth OTP and `SyncEngine` do **not** call `apps/api` yet.
 
-- src/app
-- src/features
-- src/core
-- src/components
-- src/lib
-
-This is intentionally scaffolded first so the product architecture can grow without disturbing the current working web and API code.
+Do not depend on this package for demos. Use `apps/web` + `apps/api` instead.

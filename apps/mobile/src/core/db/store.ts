@@ -59,6 +59,7 @@ export const listBatches = (): LocalBatch[] => localDb.batches;
 export const listMortality = (): LocalMortalityEntry[] => localDb.mortality;
 
 export const addMortalityEntry = (entry: LocalMortalityEntry): LocalMortalityEntry => {
+  if (localDb.mortality.some((existing) => existing.id === entry.id)) return entry;
   localDb.mortality = [entry, ...localDb.mortality];
   return entry;
 };

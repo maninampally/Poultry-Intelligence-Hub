@@ -42,3 +42,8 @@ export const resetMortalityDraft = () => {
 export const appendMortalityEntry = (entry: MortalityStoreState['entries'][number]) => {
   mortalityStore.entries = [entry, ...mortalityStore.entries];
 };
+
+export const upsertMortalityEntry = (entry: MortalityStoreState['entries'][number]) => {
+  if (mortalityStore.entries.some((existing) => existing.id === entry.id)) return;
+  appendMortalityEntry(entry);
+};
