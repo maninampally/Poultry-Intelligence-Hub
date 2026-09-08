@@ -8,5 +8,5 @@ Run locally:
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-The current `apps/api` Express service remains read-only legacy infrastructure
-for the web dashboard until endpoint parity is verified.
+Express (`apps/api`) remains legacy for the web dashboard until cutover gates
+in [`docs/DESIGN.md`](../../docs/DESIGN.md) pass.

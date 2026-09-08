@@ -2,77 +2,69 @@
 
 **Murgi Mitra** — broiler farm management for Indian poultry operations.
 
-pnpm + TypeScript monorepo. Postgres (Supabase-compatible).
+Design & migration: [`docs/DESIGN.md`](docs/DESIGN.md)
 
-## Active stack (use these)
+## What to run today
 
-```
-apps/web                   Farmer dashboard (React 19 + Vite)
-apps/api                   REST API (Express 5)
-packages/db                Postgres client, .sql queries, migrations
-packages/api-spec          OpenAPI contract + Orval codegen
-packages/api-zod           Generated Zod validators (API)
-packages/api-client-react  Generated React Query hooks (web)
-scripts                    Seed data
-deploy/                    Docker Compose / nginx examples
-docs/                      Architecture notes
-```
+| Surface | Path | Status |
+|---|---|---|
+| Web dashboard (demo/admin) | `apps/web` + Express `apps/api` | **Runnable** |
+| Farmer mobile | `apps/mobile` → FastAPI `apps/api-python` | In progress |
+| Background jobs | `apps/worker-python` (Celery) | Scaffolded |
 
-## Scaffolds (not production yet)
-
-```
-apps/mobile    Expo/RN farmer app — offline sync stub, not wired to API
-apps/worker    Background jobs stub — no queue yet
-```
-
-## Commands
+## Quick start (web)
 
 ```bash
 cp .env.example .env
-# Set DATABASE_URL to your Supabase Postgres URI
+# Set DATABASE_URL (Supabase Postgres URI)
 
 corepack pnpm install
-corepack pnpm run db:migrate   # applies packages/db/migrations/001_init_schema.sql
-corepack pnpm run seed         # sample farms / batches
+corepack pnpm run db:migrate   # 001–007 via schema_migrations
+corepack pnpm run seed
 corepack pnpm run dev:api      # http://127.0.0.1:8080
 corepack pnpm run dev:web      # http://127.0.0.1:5173
-corepack pnpm run typecheck
-corepack pnpm run build
-corepack pnpm run codegen      # regenerate client + Zod from OpenAPI
 ```
 
-## Data flow
+## Repo layout
 
 ```
-Browser (apps/web)
-   → /api/* (Vite proxy or nginx)
-   → Express (apps/api)
-   → packages/db (.sql files)
-   → PostgreSQL / Supabase
+apps/
+  web/            React dashboard (admin/demo)
+  api/            Express REST (legacy until FastAPI parity)
+  api-python/     FastAPI entrypoint (sync + health)
+  mobile/         Expo farmer app (offline sync → FastAPI)
+  worker/         Legacy TS stub
+  worker-python/  Celery entrypoint
+packages/
+  db/             SQL queries + migrate runner
+  backend-core/   Shared Python domain
+  api-spec/       OpenAPI + Orval
+  api-zod/        Generated Zod
+  api-client-react/
+db/migrations/    Event ledger, tenancy, feed, finance, RLS (002–007)
+docs/DESIGN.md    Product + architecture + migration (single guide)
+deploy/           Docker / nginx examples
 ```
 
-Contract-first: edit `packages/api-spec/openapi.yaml`, then `pnpm run codegen`.
+## Env essentials
 
-## Database
+See [`.env.example`](.env.example):
 
-Point `DATABASE_URL` at **Supabase** (Project Settings → Database → URI).  
-Migration: [`packages/db/migrations/001_init_schema.sql`](packages/db/migrations/001_init_schema.sql).  
-Queries live as plain `.sql` under `packages/db/queries/**` — no ORM.
+- `DATABASE_URL` — required
+- `JWT_SECRET` — required for FastAPI
+- `CELERY_BROKER_URL` — Redis for workers
+- `EXPO_PUBLIC_API_URL` — mobile → FastAPI (default `http://127.0.0.1:8000`)
+- `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` — mobile auth
 
-Optional local Postgres: see [`deploy/README.md`](deploy/README.md).
+## FastAPI (optional)
 
-## Migration status
+```bash
+pip install -e packages/backend-core
+pip install -e apps/api-python
+pip install -e apps/worker-python
 
-Mobile sync now targets the FastAPI migration service through
-`EXPO_PUBLIC_API_URL`. Express remains the legacy web dashboard API until
-Phase 7 parity gates are complete. See
-[`docs/runbooks/phase-7-cutover.md`](docs/runbooks/phase-7-cutover.md).
+cd apps/api-python
+python -m uvicorn app.main:app --reload --port 8000
+```
 
-## Not done yet
-
-- Auth / tenant isolation
-- Automated tests & CI
-- Mobile ↔ API sync
-- Worker jobs
-
-Architecture: [`docs/architecture.md`](docs/architecture.md)
+Cutover gates live in [`docs/DESIGN.md`](docs/DESIGN.md) §3.

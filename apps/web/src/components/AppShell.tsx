@@ -26,7 +26,7 @@ interface NavItem {
 
 function useNav(): NavItem[] {
   const { data: alerts } = useListAlerts({ query: { queryKey: getListAlertsQueryKey(), staleTime: 30000 } });
-  const openAlerts = alerts?.filter((a) => !a.resolvedAt).length ?? 0;
+  const openAlerts = (Array.isArray(alerts) ? alerts : []).filter((a) => !a.resolvedAt).length;
   return [
     { to: "/", label: "Dashboard", hi: "डैशबोर्ड", icon: LayoutDashboard, match: (p) => p === "/" || p === "" },
     { to: "/farms", label: "Farms", hi: "खेत", icon: Tractor, match: (p) => p.startsWith("/farms") },

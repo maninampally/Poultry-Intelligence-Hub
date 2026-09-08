@@ -55,6 +55,8 @@ Thumbs.db
 .agents/
 .config/
 **/.replit-artifact
+.git-commit-clean.sh
+.git-strip-coauthor.sh
 
 murgi-mitra-project-structure.md
 murgi-mitra-tech-stack.md

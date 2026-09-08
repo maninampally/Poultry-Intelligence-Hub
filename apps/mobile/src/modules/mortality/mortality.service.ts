@@ -1,6 +1,7 @@
 import { SyncOutbox } from '../../core/sync/SyncOutbox';
-import { addMortalityEntry } from '../../core/db/store';
-import { appendMortalityEntry } from './mortality.store';
+import { addMortalityEntry, listMortality } from '../../core/db/store';
+import { appendMortalityEntry, useMortalityStore } from './mortality.store';
+import { generateId } from '../../core/utils/id';
 import type { MortalityEntry } from './mortality.types';
 
 export interface CreateMortalityParams {
@@ -10,39 +11,34 @@ export interface CreateMortalityParams {
   cause: MortalityEntry['cause'];
 }
 
-const generateUuid = (): string => {
-  const bytes = Array.from({ length: 16 }, () => Math.floor(Math.random() * 256));
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-};
+const toEntry = (row: {
+  id: string;
+  batchId: string;
+  shedId: string;
+  count: number;
+  cause: string;
+  occurredAt: string;
+}): MortalityEntry => ({
+  id: row.id,
+  batchId: row.batchId,
+  shedId: row.shedId,
+  count: row.count,
+  cause: (['respiratory', 'heat', 'ascites', 'unknown', 'other'].includes(row.cause)
+    ? row.cause
+    : 'unknown') as MortalityEntry['cause'],
+  occurredAt: row.occurredAt,
+});
 
 export class MortalityService {
   static listRecent(): MortalityEntry[] {
-    return [
-      {
-        id: 'mortality-1',
-        batchId: 'batch-1',
-        shedId: 'shed-1',
-        count: 3,
-        cause: 'unknown',
-        occurredAt: new Date(Date.now() - 1800000).toISOString(),
-      },
-      {
-        id: 'mortality-2',
-        batchId: 'batch-2',
-        shedId: 'shed-3',
-        count: 2,
-        cause: 'heat',
-        occurredAt: new Date(Date.now() - 3600000).toISOString(),
-      },
-    ];
+    const fromStore = useMortalityStore().entries.map(toEntry);
+    if (fromStore.length > 0) return fromStore;
+    return listMortality().map(toEntry);
   }
 
   static create(params: CreateMortalityParams): MortalityEntry {
     const entry: MortalityEntry = {
-      id: generateUuid(),
+      id: generateId(),
       batchId: params.batchId,
       shedId: params.shedId,
       count: params.count,
@@ -50,27 +46,12 @@ export class MortalityService {
       occurredAt: new Date().toISOString(),
     };
 
-    appendMortalityEntry({
-      id: entry.id,
-      batchId: entry.batchId,
-      shedId: entry.shedId,
-      count: entry.count,
-      cause: entry.cause,
-      occurredAt: entry.occurredAt,
-    });
-
-    addMortalityEntry({
-      id: entry.id,
-      batchId: entry.batchId,
-      shedId: entry.shedId,
-      count: entry.count,
-      cause: entry.cause,
-      occurredAt: entry.occurredAt,
-    });
+    appendMortalityEntry(entry);
+    addMortalityEntry(entry);
 
     void SyncOutbox.enqueue({
       id: entry.id,
-      operationId: generateUuid(),
+      operationId: generateId(),
       idempotencyKey: entry.id,
       resource: 'mortality-entry',
       action: 'create',
