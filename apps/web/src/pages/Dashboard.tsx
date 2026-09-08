@@ -34,8 +34,12 @@ export default function Dashboard() {
   const { data: alerts } = useListAlerts();
   const { t } = useLang();
 
-  const openAlerts = alerts?.filter((a) => !a.resolvedAt) ?? [];
+  const batchItems = Array.isArray(batches) ? batches : [];
+  const alertItems = Array.isArray(alerts) ? alerts : [];
+  const activityItems = Array.isArray(activity) ? activity : [];
+  const openAlerts = alertItems.filter((a) => !a.resolvedAt);
   const criticalAlerts = openAlerts.filter((a) => a.severity === "critical");
+  const avgFcr = typeof overview?.avgFcr === "number" && Number.isFinite(overview.avgFcr) ? overview.avgFcr : 0;
 
   const today = new Date();
   const greeting = today.getHours() < 12 ? t("Good morning", "सुप्रभात") : today.getHours() < 17 ? t("Good afternoon", "नमस्कार") : t("Good evening", "शुभ संध्या");
@@ -110,10 +114,10 @@ export default function Dashboard() {
               />
               <StatCard
                 testId="stat-fcr"
-                tone={overview.avgFcr > 1.85 ? "warn" : "good"}
+                tone={avgFcr > 1.85 ? "warn" : "good"}
                 label={t("Avg. FCR", "औसत FCR")}
                 icon={Wheat}
-                value={overview.avgFcr.toFixed(2)}
+                value={avgFcr.toFixed(2)}
                 hint={`${formatNumber(overview.feedConsumedToday)} ${t("kg feed today", "किग्रा फ़ीड आज")}`}
               />
               <StatCard
@@ -155,12 +159,12 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="divide-y divide-border">
-              {batches?.length === 0 && (
+              {batchItems.length === 0 && (
                 <div className="p-8 text-center text-sm text-muted-foreground">
                   {t("No active batches yet — start one above.", "कोई सक्रिय बैच नहीं — ऊपर से शुरू करें।")}
                 </div>
               )}
-              {batches?.slice(0, 4).map((b) => {
+              {batchItems.slice(0, 4).map((b) => {
                 const fcrTone = b.fcr > 1.95 ? "bad" : b.fcr > 1.8 ? "warn" : "good";
                 const mortTone = b.mortalityPct > 5 ? "bad" : b.mortalityPct > 3 ? "warn" : "good";
                 return (
@@ -213,10 +217,10 @@ export default function Dashboard() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="divide-y divide-border max-h-[420px] overflow-y-auto">
-              {activity?.length === 0 && (
+              {activityItems.length === 0 && (
                 <div className="p-8 text-center text-sm text-muted-foreground">{t("No activity yet.", "कोई गतिविधि नहीं।")}</div>
               )}
-              {activity?.map((a, i) => {
+              {activityItems.map((a, i) => {
                 const colorByType: Record<string, string> = {
                   mortality: "bg-destructive/15 text-destructive",
                   feed: "bg-[hsl(42,78%,48%)]/15 text-[hsl(28,80%,32%)]",
@@ -251,8 +255,8 @@ export default function Dashboard() {
             <div className="space-y-3">
               <div className="rounded-lg bg-card border p-3">
                 <div className="text-xs font-medium text-muted-foreground">{t("Best performer", "सर्वश्रेष्ठ बैच")}</div>
-                {batches && batches.length > 0 && (() => {
-                  const best = [...batches].sort((a, b) => a.fcr - b.fcr)[0];
+                {batchItems.length > 0 && (() => {
+                  const best = [...batchItems].sort((a, b) => a.fcr - b.fcr)[0];
                   return (
                     <Link href={`/insights/${best.id}`} asChild>
                       <a className="block mt-1.5" data-testid="link-best-performer">
@@ -265,8 +269,8 @@ export default function Dashboard() {
               </div>
               <div className="rounded-lg bg-card border p-3">
                 <div className="text-xs font-medium text-muted-foreground">{t("Needs attention", "ध्यान दें")}</div>
-                {batches && batches.length > 0 && (() => {
-                  const worst = [...batches].sort((a, b) => b.mortalityPct - a.mortalityPct)[0];
+                {batchItems.length > 0 && (() => {
+                  const worst = [...batchItems].sort((a, b) => b.mortalityPct - a.mortalityPct)[0];
                   return (
                     <Link href={`/insights/${worst.id}`} asChild>
                       <a className="block mt-1.5" data-testid="link-worst-performer">
@@ -290,3 +294,5 @@ export default function Dashboard() {
     </AppShell>
   );
 }
+
+

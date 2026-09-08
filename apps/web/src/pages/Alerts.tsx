@@ -36,7 +36,8 @@ export default function Alerts() {
     },
   });
 
-  const filtered = alerts?.filter((a) => (view === "open" ? !a.resolvedAt : !!a.resolvedAt)) ?? [];
+  const alertItems = Array.isArray(alerts) ? alerts : [];
+  const filtered = alertItems.filter((a) => (view === "open" ? !a.resolvedAt : !!a.resolvedAt));
   const sorted = [...filtered].sort((a, b) => {
     const order = { critical: 0, warning: 1, info: 2 } as const;
     if (a.severity !== b.severity) return order[a.severity] - order[b.severity];
@@ -53,8 +54,8 @@ export default function Alerts() {
 
         <Tabs value={view} onValueChange={(v) => setView(v as "open" | "resolved")} className="mb-4">
           <TabsList>
-            <TabsTrigger value="open" data-testid="tab-alerts-open">{t("Open", "खुले")} ({alerts?.filter((a) => !a.resolvedAt).length ?? 0})</TabsTrigger>
-            <TabsTrigger value="resolved" data-testid="tab-alerts-resolved">{t("Resolved", "हल हो गए")} ({alerts?.filter((a) => a.resolvedAt).length ?? 0})</TabsTrigger>
+            <TabsTrigger value="open" data-testid="tab-alerts-open">{t("Open", "खुले")} ({alertItems.filter((a) => !a.resolvedAt).length})</TabsTrigger>
+            <TabsTrigger value="resolved" data-testid="tab-alerts-resolved">{t("Resolved", "हल हो गए")} ({alertItems.filter((a) => a.resolvedAt).length})</TabsTrigger>
           </TabsList>
         </Tabs>
 
