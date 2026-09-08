@@ -1,13 +1,24 @@
-# Mobile app (scaffold)
+# Mobile app
 
-**Status: scaffold only — not wired to the production API.**
+Expo / React Native farmer client. Offline-first logging with sync toward FastAPI.
 
-Planned farmer-facing React Native / Expo app for:
+## Status
 
-- Offline-first daily logging (mortality, feed, weight, cost)
-- Local SQLite + sync outbox
-- OTP auth, i18n, voice capture
+- Local DB, outbox, and `SyncEngine` push/pull against `EXPO_PUBLIC_API_URL` (FastAPI).
+- Auth path expects Supabase (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`).
+- Not yet pilot-ready — use `apps/web` + Express for demos.
 
-Code under `src/` is exploratory. Auth OTP and `SyncEngine` do **not** call `apps/api` yet.
+## Run (when Expo deps are installed)
 
-Do not depend on this package for demos. Use `apps/web` + `apps/api` instead.
+```bash
+# from repo root .env
+# EXPO_PUBLIC_API_URL=http://127.0.0.1:8000
+# EXPO_PUBLIC_SUPABASE_URL=...
+# EXPO_PUBLIC_SUPABASE_ANON_KEY=...
+
+cd apps/mobile
+npx expo start
+```
+
+FastAPI must be running on port 8000 for sync.  
+See [`README.md`](../../README.md) and [`docs/DESIGN.md`](../../docs/DESIGN.md).

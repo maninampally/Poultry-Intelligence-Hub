@@ -1,4 +1,15 @@
 # Celery worker
 
-Migration entrypoint reserved for the Celery worker. The current `apps/worker` package remains a scaffold until migration work begins.
+Python worker entrypoint for projection rebuilds (metrics, feed stock, finance).
 
+```bash
+# Redis required
+# CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+
+pip install -e ../../packages/backend-core
+pip install -e .
+
+celery -A app.celery_app.celery_app worker -l info
+```
+
+Requires migrations applied and `DATABASE_URL` set. See root README.
