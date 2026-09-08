@@ -1,12 +1,7 @@
-# Worker (scaffold)
+# Worker (TypeScript) — FROZEN
 
-**Status: scaffold only — no job runner yet.**
+**Do not add jobs here.**
 
-Reserved for:
+Background processing belongs in [`apps/worker-python`](../worker-python) (Celery).
 
-- Alert evaluation
-- Scheduled reminders
-- Report generation
-- Sync / AI recommendation jobs
-
-`src/index.ts` is a stub. Background work is not scheduled or queued.
+This package remains only so the pnpm workspace does not break. Scripts are no-ops.
