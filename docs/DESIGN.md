@@ -125,6 +125,10 @@ db/migrations | infra/ | docs/ | tests/
 API and worker both import `murgi_mitra` from `backend-core`.  
 Routers stay thin: router → application service → domain → repository → DB + outbox.
 
+**Implemented reference module:** `packages/backend-core/.../modules/daily_ops/`  
+(mortality only — `domain` / `application` / `infrastructure`).  
+`modules/sync` is the HTTP adapter; feed/finance handlers there are frozen.
+
 ### Infra (V1)
 
 ECS Fargate · RDS Postgres · Redis · S3 · ALB · Secrets Manager · CloudWatch · FCM  
