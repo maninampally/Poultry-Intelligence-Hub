@@ -3,10 +3,19 @@ import { SyncOutbox } from './SyncOutbox';
 import { tokenStore } from '../auth/token.store';
 import { createApiClient } from '../api/client';
 import { apiBaseUrl } from '../api/config';
-import { addMortalityEntry } from '../db/store';
+import { addMortalityEntry, hydrateLocalMortality } from '../db/store';
 import { upsertMortalityEntry } from '../../modules/mortality/mortality.store';
 
 export type SyncDirection = 'pull' | 'push';
+
+type MortalityPayload = {
+  batchId: string;
+  shedId: string;
+  count: number;
+  cause?: string;
+  shift?: string;
+  supersedesEventId?: string;
+};
 
 export class SyncEngine {
   static running = false;
@@ -16,6 +25,7 @@ export class SyncEngine {
 
     this.running = true;
     try {
+      await hydrateLocalMortality();
       const cursor = await SyncCursor.load();
       const pending = await SyncOutbox.readPending();
       const token = await tokenStore.get();
@@ -27,13 +37,7 @@ export class SyncEngine {
           '/v1/sync/push',
           {
             changes: pending.changes.map((change) => {
-              const payload = change.payload as {
-                batchId: string;
-                shedId: string;
-                count: number;
-                cause?: string;
-                shift?: string;
-              };
+              const payload = change.payload as MortalityPayload;
               return {
                 operation_id: change.operationId,
                 idempotency_key: change.idempotencyKey,
@@ -46,6 +50,7 @@ export class SyncEngine {
                 count: payload.count,
                 cause: payload.cause,
                 shift: payload.shift ?? 'unspecified',
+                supersedes_event_id: payload.supersedesEventId ?? null,
               };
             }),
           },
@@ -67,7 +72,13 @@ export class SyncEngine {
             event_type: string;
             batch_id: string | null;
             occurred_at: string;
-            payload: { shed_id?: string; count?: number; cause?: string; shift?: string };
+            payload: {
+              shed_id?: string;
+              count?: number;
+              cause?: string;
+              shift?: string;
+              supersedes_event_id?: string;
+            };
           }>;
           next_cursor: string | null;
         }>(`/v1/sync/pull${query}`, token);
@@ -82,6 +93,7 @@ export class SyncEngine {
               ? (event.payload.cause as 'respiratory' | 'heat' | 'ascites' | 'unknown' | 'other')
               : 'unknown',
             occurredAt: event.occurred_at,
+            supersedesEventId: event.payload.supersedes_event_id,
           };
           addMortalityEntry(entry);
           upsertMortalityEntry(entry);
