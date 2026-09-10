@@ -127,11 +127,21 @@ export const schema: LocalTableDefinition[] = [
     name: 'sync_outbox',
     fields: {
       id: 'string',
+      operation_id: 'string',
+      idempotency_key: 'string',
       resource: 'string',
       action: 'string',
       entity_id: 'string',
       payload: 'string',
+      occurred_at: 'string',
       sync_status: 'string',
+    },
+  },
+  {
+    name: 'sync_cursor',
+    fields: {
+      id: 'string',
+      cursor: 'string',
     },
   },
   {
