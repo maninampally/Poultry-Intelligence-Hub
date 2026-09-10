@@ -35,6 +35,22 @@ Feed / weight / finance sync handlers may exist but are **frozen** until the mor
 - [ ] Cross-tenant access denied (auth + RLS)
 - [ ] Projection rebuildable from ledger
 
+### How to prove (mortality gate)
+
+Local stack (no full AWS staging required):
+
+1. Apply migrations `001`–`007` against Postgres (`DATABASE_URL`).
+2. Seed a tenant, farm membership, batch, and shed for a pilot JWT user.
+3. Start FastAPI (`apps/api-python`), Redis, and Celery (`apps/worker-python` — `outbox.relay` + metrics).
+4. On mobile: `openLocalDatabase()` then log mortality offline; confirm pending row in durable outbox (AsyncStorage).
+5. Force-quit and reopen the app — pending outbox items must still be present.
+6. Reconnect and `SyncEngine.syncNow('push')` — FastAPI accepts once; retry with same `idempotency_key` returns `duplicate=true`.
+7. Call `MortalityService.correct({ originalEventId, ... })` — new event carries `supersedes_event_id`; original row unchanged; rebuild metrics ignores the superseded count.
+8. `pytest tests/contract -q` (install `tests/contract/requirements.txt` + editable `backend-core`).
+9. Express `POST /batches/:batchId/mortality` returns **410** (`EXPRESS_MORTALITY_WRITE_FROZEN`); farmer writes go only through FastAPI `/v1/sync/push`. GET mortality routes on Express may remain for the web dashboard during dual-stack.
+
+**Express mortality POST is frozen.** Do not re-enable farmer writes on Express.
+
 ### In scope
 
 Identity (OTP/JWT) · tenancy/farm/shed · batches · mortality · feed movements · weight · expenses/sales · light vaccination · sync · metrics/alerts · closeout PDF · observability
@@ -157,10 +173,10 @@ No Kubernetes / Kafka / Elasticsearch / separate AI platform in V1.
 
 | Phase | Goal |
 |---|---|
-| 0 | Freeze Express; baseline OpenAPI; backups; smoke tests |
+| 0 | Freeze Express farmer mortality writes (410 → FastAPI sync); baseline OpenAPI; backups; smoke tests |
 | 1 | Python skeleton (`api-python`, `worker-python`, `backend-core`) |
 | 2 | Event ledger tables; keep legacy logs |
-| 3 | **Mortality end-to-end** (MVP gate) |
+| 3 | **Mortality end-to-end** (MVP gate) — durable mobile outbox/cursor, correction, contract tests |
 | 4 | Feed inventory movements |
 | 5 | Weight / finance projections |
 | 6 | Tenants, RBAC, RLS |

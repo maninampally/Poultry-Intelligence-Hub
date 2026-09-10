@@ -7,4 +7,6 @@ export interface MortalityEntry {
   count: number;
   cause: MortalityCause;
   occurredAt: string;
+  /** When set, this entry corrects/supersedes the referenced event (original is kept). */
+  supersedesEventId?: string;
 }
