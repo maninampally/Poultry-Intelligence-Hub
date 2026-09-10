@@ -1,4 +1,8 @@
-"""Performance and finance event synchronization."""
+"""Performance and finance event synchronization.
+
+FROZEN: do not expand until the mortality MVP gate in docs/DESIGN.md passes.
+Mortality writes belong in modules.daily_ops.
+"""
 
 import json
 from datetime import datetime, timezone

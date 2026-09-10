@@ -1,4 +1,8 @@
-"""Feed movement synchronization service."""
+"""Feed movement synchronization service.
+
+FROZEN: do not expand until the mortality MVP gate in docs/DESIGN.md passes.
+Mortality writes belong in modules.daily_ops.
+"""
 
 import json
 from datetime import datetime, timezone
