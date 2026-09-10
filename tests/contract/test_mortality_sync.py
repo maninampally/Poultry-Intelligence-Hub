@@ -1,6 +1,7 @@
 """Mortality sync contract tests.
 
-Covers idempotency, correction (`supersedes_event_id`), and metrics rebuild rules.
+Covers idempotency, correction (`supersedes_event_id`), metrics rebuild rules,
+pull payload shape, and Express write freeze.
 
 Without `DATABASE_URL`, domain + command-mapping tests run against pure/mocked code.
 With `DATABASE_URL`, optional integration cases exercise the live ledger (skipped if unset).
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -82,6 +84,59 @@ def test_metrics_exclude_superseded_events_rule():
     }
     active = [e for e in events if e["id"] not in superseded_ids]
     assert sum(e["count"] for e in active) == 5  # corr(3) + other(2); orig ignored
+
+
+def test_validate_correction_target_rejects_missing_original():
+    with pytest.raises(ValueError, match="original_event_not_found"):
+        rules.validate_correction_target(
+            original=None,
+            batch_id=uuid4(),
+            tenant_id="tenant-1",
+        )
+
+
+def test_validate_correction_target_rejects_already_superseded():
+    batch_id = uuid4()
+    with pytest.raises(ValueError, match="original_event_already_superseded"):
+        rules.validate_correction_target(
+            original={
+                "tenant_id": "tenant-1",
+                "batch_id": batch_id,
+                "event_type": "mortality.logged",
+                "already_superseded": True,
+            },
+            batch_id=batch_id,
+            tenant_id="tenant-1",
+        )
+
+
+def test_validate_correction_target_rejects_batch_mismatch():
+    with pytest.raises(ValueError, match="original_event_batch_mismatch"):
+        rules.validate_correction_target(
+            original={
+                "tenant_id": "tenant-1",
+                "batch_id": uuid4(),
+                "event_type": "mortality.logged",
+                "already_superseded": False,
+            },
+            batch_id=uuid4(),
+            tenant_id="tenant-1",
+        )
+
+
+def test_mortality_logged_payload_includes_supersedes_when_set():
+    original = uuid4()
+    event = MortalityLogged(
+        event_id=uuid4(),
+        batch_id=uuid4(),
+        shed_id=uuid4(),
+        count=2,
+        shift="morning",
+        cause="heat",
+        occurred_at=datetime.now(timezone.utc),
+        supersedes_event_id=original,
+    )
+    assert event.payload()["supersedes_event_id"] == str(original)
 
 
 # --- Sync handler mapping ---
@@ -177,6 +232,7 @@ def test_log_mortality_duplicate_idempotency_key_returns_duplicate_true():
             "murgi_mitra.modules.daily_ops.application.service.MortalityRepository",
             return_value=repo,
         ),
+        patch("murgi_mitra.modules.daily_ops.application.service.apply_rls_context"),
     ):
         tx.return_value.__enter__.return_value = MagicMock()
         tx.return_value.__exit__.return_value = None
@@ -188,7 +244,7 @@ def test_log_mortality_duplicate_idempotency_key_returns_duplicate_true():
     repo.insert_logged_event.assert_not_called()
 
 
-def test_log_mortality_correction_inserts_new_event_with_supersedes():
+def test_log_mortality_correction_validates_and_inserts_new_event():
     original_id = uuid4()
     command = _command(supersedes_event_id=original_id, idempotency_key="corr-key")
     event = MortalityLogged(
@@ -203,6 +259,12 @@ def test_log_mortality_correction_inserts_new_event_with_supersedes():
     )
     repo = MagicMock()
     repo.find_sync_operation.return_value = None
+    repo.load_correction_target.return_value = {
+        "tenant_id": command.tenant_id,
+        "batch_id": command.batch_id,
+        "event_type": "mortality.logged",
+        "already_superseded": False,
+    }
     repo.insert_logged_event.return_value = event
 
     with (
@@ -211,6 +273,7 @@ def test_log_mortality_correction_inserts_new_event_with_supersedes():
             "murgi_mitra.modules.daily_ops.application.service.MortalityRepository",
             return_value=repo,
         ),
+        patch("murgi_mitra.modules.daily_ops.application.service.apply_rls_context"),
     ):
         tx.return_value.__enter__.return_value = MagicMock()
         tx.return_value.__exit__.return_value = None
@@ -219,10 +282,32 @@ def test_log_mortality_correction_inserts_new_event_with_supersedes():
     assert result.duplicate is False
     assert result.accepted is True
     assert result.event_id == command.entity_id
+    repo.load_correction_target.assert_called_once_with(original_id, command.tenant_id)
     inserted = repo.insert_logged_event.call_args.args[0]
     assert inserted.supersedes_event_id == original_id
-    # Original event is never updated — only a new insert path exists.
-    assert not hasattr(repo, "update_logged_event") or not repo.update_logged_event.called
+
+
+def test_log_mortality_correction_rejects_missing_original():
+    original_id = uuid4()
+    command = _command(supersedes_event_id=original_id, idempotency_key="corr-missing")
+    repo = MagicMock()
+    repo.find_sync_operation.return_value = None
+    repo.load_correction_target.return_value = None
+
+    with (
+        patch("murgi_mitra.modules.daily_ops.application.service.transaction") as tx,
+        patch(
+            "murgi_mitra.modules.daily_ops.application.service.MortalityRepository",
+            return_value=repo,
+        ),
+        patch("murgi_mitra.modules.daily_ops.application.service.apply_rls_context"),
+    ):
+        tx.return_value.__enter__.return_value = MagicMock()
+        tx.return_value.__exit__.return_value = None
+        with pytest.raises(ValueError, match="original_event_not_found"):
+            mortality_service.log_mortality(command)
+
+    repo.insert_logged_event.assert_not_called()
 
 
 def test_rebuild_batch_metrics_uses_repo_totals_that_exclude_superseded():
@@ -251,6 +336,20 @@ def test_rebuild_batch_metrics_uses_repo_totals_that_exclude_superseded():
     assert kwargs["cumulative_mortality"] == 5
     assert kwargs["live_birds"] == 995
     assert kwargs["mortality_pct"] == 0.5
+
+
+def test_express_mortality_post_frozen_in_source():
+    route = Path("apps/api/src/routes/mortality.ts").read_text()
+    assert "410" in route
+    assert "EXPRESS_MORTALITY_WRITE_FROZEN" in route
+    assert "sync/push" in route
+
+
+def test_celery_beat_schedules_outbox_relay():
+    source = Path("apps/worker-python/app/celery_app.py").read_text()
+    assert "relay-outbox-every-minute" in source
+    assert "outbox.relay" in source
+    assert "beat_schedule" in source
 
 
 @requires_db

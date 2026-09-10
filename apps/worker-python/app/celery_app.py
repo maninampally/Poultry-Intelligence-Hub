@@ -4,11 +4,10 @@ import os
 from uuid import UUID
 
 from celery import Celery
-
-from murgi_mitra.workers.metrics import rebuild_batch_metrics
+from murgi_mitra.core.database import transaction
 from murgi_mitra.workers.feed import rebuild_feed_stock
 from murgi_mitra.workers.finance import rebuild_batch_financials
-from murgi_mitra.core.database import transaction
+from murgi_mitra.workers.metrics import rebuild_batch_metrics
 
 broker_url = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
 
@@ -19,6 +18,13 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    # Keep mortality projections fresh without a manual outbox kick.
+    beat_schedule={
+        "relay-outbox-every-minute": {
+            "task": "outbox.relay",
+            "schedule": 60.0,
+        },
+    },
 )
 
 
@@ -59,7 +65,7 @@ def relay_outbox_task(limit: int = 100) -> int:
             for outbox_id, topic, batch_id, tenant_id, farm_id, payload in events:
                 if topic in ("mortality.logged", "weight-sample.logged") and batch_id:
                     rebuild_batch_metrics_task.delay(str(batch_id))
-                elif topic == "expense-entry.logged" or topic == "sale-record.logged":
+                elif topic in ("expense-entry.logged", "sale-record.logged"):
                     if batch_id:
                         rebuild_batch_financials_task.delay(str(batch_id))
                 elif topic == "feed.inventory.moved":
