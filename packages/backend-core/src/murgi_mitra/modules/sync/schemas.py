@@ -112,6 +112,7 @@ class SyncEvent(BaseModel):
     batch_id: UUID | None
     occurred_at: datetime
     payload: dict[str, Any]
+    supersedes_event_id: UUID | None = None
 
 
 class SyncPullResponse(BaseModel):

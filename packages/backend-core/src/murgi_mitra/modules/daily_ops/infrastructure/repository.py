@@ -37,6 +37,30 @@ class MortalityRepository:
             )
             return cursor.fetchone()
 
+    def load_correction_target(
+        self, event_id: UUID, tenant_id: str
+    ) -> dict[str, Any] | None:
+        """Load the event being corrected, including whether it is already superseded."""
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """
+                SELECT e.id,
+                       e.tenant_id,
+                       e.batch_id,
+                       e.event_type,
+                       EXISTS (
+                         SELECT 1
+                         FROM app.farm_events correction
+                         WHERE correction.supersedes_event_id = e.id
+                       ) AS already_superseded
+                FROM app.farm_events e
+                WHERE e.id = %s
+                  AND e.tenant_id = %s
+                """,
+                (event_id, tenant_id),
+            )
+            return cursor.fetchone()
+
     def insert_logged_event(self, command: LogMortality) -> MortalityLogged:
         with self._connection.cursor(row_factory=dict_row) as cursor:
             event = MortalityLogged(

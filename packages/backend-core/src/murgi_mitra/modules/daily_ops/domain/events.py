@@ -21,10 +21,13 @@ class MortalityLogged:
     supersedes_event_id: UUID | None = None
 
     def payload(self) -> dict:
-        return {
+        data = {
             "batch_id": str(self.batch_id),
             "shed_id": str(self.shed_id),
             "count": self.count,
             "shift": self.shift,
             "cause": self.cause,
         }
+        if self.supersedes_event_id is not None:
+            data["supersedes_event_id"] = str(self.supersedes_event_id)
+        return data
