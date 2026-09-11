@@ -192,6 +192,43 @@ class MortalityRepository:
                 ),
             )
 
+    def user_can_access_batch(
+        self, batch_id: UUID, tenant_id: str, user_id: str
+    ) -> bool:
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """
+                SELECT 1 AS ok
+                FROM public.batches b
+                JOIN public.farms f ON f.id = b.farm_id
+                JOIN public.farm_memberships membership
+                  ON membership.farm_id = f.id
+                 AND membership.tenant_id = %s
+                 AND membership.user_id = %s
+                WHERE b.id = %s
+                  AND f.tenant_id = %s
+                LIMIT 1
+                """,
+                (tenant_id, user_id, batch_id, tenant_id),
+            )
+            return cursor.fetchone() is not None
+
+    def load_batch_metrics(
+        self, batch_id: UUID, tenant_id: str
+    ) -> dict[str, Any] | None:
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """
+                SELECT batch_id, tenant_id, placement_count, cumulative_mortality,
+                       live_bird_count, mortality_percent, last_processed_event_id,
+                       projection_status
+                FROM app.batch_metrics
+                WHERE batch_id = %s AND tenant_id = %s
+                """,
+                (batch_id, tenant_id),
+            )
+            return cursor.fetchone()
+
     def load_batch_mortality_totals(self, batch_id: UUID) -> dict[str, Any] | None:
         with self._connection.cursor(row_factory=dict_row) as cursor:
             cursor.execute(

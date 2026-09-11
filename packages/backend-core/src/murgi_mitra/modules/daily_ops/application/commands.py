@@ -29,3 +29,15 @@ class LogMortalityResult:
     event_id: UUID | None = None
     duplicate: bool = False
     rejection_code: str | None = None
+
+
+@dataclass(frozen=True)
+class BatchMetricsView:
+    batch_id: UUID
+    tenant_id: str
+    placement_count: int
+    cumulative_mortality: int
+    live_bird_count: int
+    mortality_percent: float
+    last_processed_event_id: UUID | None
+    projection_status: str

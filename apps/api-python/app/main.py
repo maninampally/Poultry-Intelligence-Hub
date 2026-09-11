@@ -3,10 +3,12 @@
 from fastapi import FastAPI
 
 from murgi_mitra.core.health import SERVICE_NAME, SERVICE_STATUS
+from murgi_mitra.modules.daily_ops.api import router as batches_router
 from murgi_mitra.modules.sync.api import router as sync_router
 
 app = FastAPI(title="Murgi Mitra API", version="0.1.0")
 app.include_router(sync_router)
+app.include_router(batches_router)
 
 
 @app.get("/health", tags=["health"])

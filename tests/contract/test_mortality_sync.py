@@ -352,6 +352,107 @@ def test_celery_beat_schedules_outbox_relay():
     assert "beat_schedule" in source
 
 
+def test_get_batch_metrics_denies_cross_tenant_access():
+    batch_id = uuid4()
+    repo = MagicMock()
+    repo.user_can_access_batch.return_value = False
+
+    with (
+        patch("murgi_mitra.modules.daily_ops.application.service.transaction") as tx,
+        patch(
+            "murgi_mitra.modules.daily_ops.application.service.MortalityRepository",
+            return_value=repo,
+        ),
+        patch("murgi_mitra.modules.daily_ops.application.service.apply_rls_context"),
+    ):
+        tx.return_value.__enter__.return_value = MagicMock()
+        tx.return_value.__exit__.return_value = None
+        with pytest.raises(PermissionError, match="batch_access_denied"):
+            mortality_service.get_batch_metrics(batch_id, _auth())
+
+    repo.load_batch_metrics.assert_not_called()
+
+
+def test_get_batch_metrics_returns_stored_projection_for_member():
+    batch_id = uuid4()
+    event_id = uuid4()
+    repo = MagicMock()
+    repo.user_can_access_batch.return_value = True
+    repo.load_batch_metrics.return_value = {
+        "batch_id": batch_id,
+        "tenant_id": "tenant-1",
+        "placement_count": 1000,
+        "cumulative_mortality": 12,
+        "live_bird_count": 988,
+        "mortality_percent": 1.2,
+        "last_processed_event_id": event_id,
+        "projection_status": "current",
+    }
+
+    with (
+        patch("murgi_mitra.modules.daily_ops.application.service.transaction") as tx,
+        patch(
+            "murgi_mitra.modules.daily_ops.application.service.MortalityRepository",
+            return_value=repo,
+        ),
+        patch("murgi_mitra.modules.daily_ops.application.service.apply_rls_context"),
+    ):
+        tx.return_value.__enter__.return_value = MagicMock()
+        tx.return_value.__exit__.return_value = None
+        view = mortality_service.get_batch_metrics(batch_id, _auth())
+
+    assert view.live_bird_count == 988
+    assert view.cumulative_mortality == 12
+    assert view.projection_status == "current"
+    assert view.last_processed_event_id == event_id
+
+
+def test_get_batch_metrics_derives_from_ledger_when_projection_missing():
+    batch_id = uuid4()
+    repo = MagicMock()
+    repo.user_can_access_batch.return_value = True
+    repo.load_batch_metrics.return_value = None
+    repo.load_batch_mortality_totals.return_value = {
+        "placement_count": 500,
+        "mortality": 20,
+        "tenant_id": "tenant-1",
+        "last_event_id": uuid4(),
+    }
+
+    with (
+        patch("murgi_mitra.modules.daily_ops.application.service.transaction") as tx,
+        patch(
+            "murgi_mitra.modules.daily_ops.application.service.MortalityRepository",
+            return_value=repo,
+        ),
+        patch("murgi_mitra.modules.daily_ops.application.service.apply_rls_context"),
+    ):
+        tx.return_value.__enter__.return_value = MagicMock()
+        tx.return_value.__exit__.return_value = None
+        view = mortality_service.get_batch_metrics(batch_id, _auth())
+
+    assert view.live_bird_count == 480
+    assert view.cumulative_mortality == 20
+    assert view.projection_status == "derived"
+
+
+def test_express_list_prefers_ledger_and_exposes_metrics_route():
+    route = Path("apps/api/src/routes/mortality.ts").read_text()
+    assert "ledger-preferred" in route or "ledger-preferred" in route.lower() or "X-Mortality-Source" in route
+    assert "/metrics" in route
+    assert "getBatchMetrics" in route
+    db_helper = Path("packages/db/src/queries/mortality.ts").read_text()
+    assert "list-ledger-by-batch.sql" in db_helper
+    assert "get-batch-metrics.sql" in db_helper
+
+
+def test_fastapi_batches_metrics_route_wired():
+    api = Path("packages/backend-core/src/murgi_mitra/modules/daily_ops/api.py").read_text()
+    main = Path("apps/api-python/app/main.py").read_text()
+    assert "/{batch_id}/metrics" in api
+    assert "batches_router" in main
+
+
 @requires_db
 def test_db_idempotency_and_correction_smoke():
     """Optional live DB smoke — requires migrated schema + seed memberships.
