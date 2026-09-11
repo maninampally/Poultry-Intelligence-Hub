@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import {
+  getBatchMetrics,
   listMortalityByBatch,
 } from "@murgi-mitra/db";
 import {
@@ -17,7 +18,9 @@ router.get("/batches/:batchId/mortality", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
+  // Prefer app.mortality_events (FastAPI ledger); legacy logs are fallback only.
   const logs = await listMortalityByBatch(params.data.batchId);
+  res.setHeader("X-Mortality-Source", "ledger-preferred");
   res.json(ListMortalityResponse.parse(logs));
 });
 
@@ -57,6 +60,21 @@ router.get("/batches/:batchId/mortality/trend", async (req, res): Promise<void> 
     points.push({ date: d, value: total });
   }
   res.json(GetMortalityTrendResponse.parse(points));
+});
+
+/** Live-bird projection from app.batch_metrics (FastAPI rebuild path). */
+router.get("/batches/:batchId/metrics", async (req, res): Promise<void> => {
+  const params = ListMortalityParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const metrics = await getBatchMetrics(params.data.batchId);
+  if (!metrics) {
+    res.status(404).json({ error: "Batch metrics not found", code: "BATCH_METRICS_NOT_FOUND" });
+    return;
+  }
+  res.json(metrics);
 });
 
 export default router;

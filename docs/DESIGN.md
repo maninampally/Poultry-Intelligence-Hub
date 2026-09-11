@@ -48,6 +48,7 @@ Local stack (no full AWS staging required):
 7. Call `MortalityService.correct({ originalEventId, ... })` — new event carries `supersedes_event_id`; original row unchanged; rebuild metrics ignores the superseded count.
 8. `pytest tests/contract -q` (install `tests/contract/requirements.txt` + editable `backend-core`).
 9. Express `POST /batches/:batchId/mortality` returns **410** (`EXPRESS_MORTALITY_WRITE_FROZEN`); farmer writes go only through FastAPI `/v1/sync/push`. GET mortality routes on Express may remain for the web dashboard during dual-stack.
+10. FastAPI `GET /v1/batches/{batch_id}/metrics` returns live birds + cumulative mortality for a member JWT; cross-tenant access returns **403**. Express `GET /batches/:batchId/metrics` reads `app.batch_metrics` when present; Express mortality list prefers ledger events over legacy `mortality_logs`.
 
 **Express mortality POST is frozen.** Do not re-enable farmer writes on Express.
 
