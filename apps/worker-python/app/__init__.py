@@ -1,2 +1,0 @@
-"""Celery service entrypoint."""
-
