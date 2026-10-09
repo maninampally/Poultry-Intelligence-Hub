@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Poultry Intelligence",
+    "slug": "poultry-intelligence",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "poultryintelligence",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#2e7d52"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.poultryintelligence.app"
+    },
+    "android": {
+      "package": "com.poultryintelligence.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#2e7d52"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
