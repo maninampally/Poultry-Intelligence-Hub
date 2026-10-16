@@ -12,8 +12,26 @@ dist
 dist-ssr
 *.local
 
+# compiled output
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
+
+# dependencies
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+
 # Editor directories and files
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -22,3 +40,37 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+.env
+.env.local
+
+# System Files
+Thumbs.db
+
+# Local / generated
+.cache/
+.local/
+.agents/
+.config/
+**/.replit-artifact
+.git-commit-clean.sh
+.git-strip-coauthor.sh
+
+murgi-mitra-project-structure.md
+murgi-mitra-tech-stack.md
