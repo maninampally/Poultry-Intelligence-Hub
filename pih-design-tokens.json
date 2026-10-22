@@ -1,0 +1,61 @@
+{
+  "color": {
+    "brand": {
+      "900": { "value": "#143D26", "type": "color" },
+      "700": { "value": "#1F5C3A", "type": "color", "description": "Primary brand green" },
+      "500": { "value": "#3E8559", "type": "color" },
+      "100": { "value": "#DDEBE1", "type": "color" }
+    },
+    "surface": {
+      "background": { "value": "#FAF6EC", "type": "color", "description": "App background (cream)" },
+      "card": { "value": "#FFFFFF", "type": "color" },
+      "border": { "value": "#E6DFCD", "type": "color" }
+    },
+    "text": {
+      "primary": { "value": "#1C2420", "type": "color" },
+      "muted": { "value": "#5B655F", "type": "color" },
+      "onBrand": { "value": "#FFFFFF", "type": "color" }
+    },
+    "status": {
+      "normal": {
+        "fg": { "value": "#1F5C3A", "type": "color" },
+        "bg": { "value": "#DDEBE1", "type": "color" }
+      },
+      "watch": {
+        "fg": { "value": "#7A4A00", "type": "color", "description": "Amber, text-safe" },
+        "bg": { "value": "#FBEBC8", "type": "color" }
+      },
+      "act": {
+        "fg": { "value": "#9C3420", "type": "color", "description": "Terracotta, text-safe" },
+        "bg": { "value": "#F8DDD5", "type": "color" },
+        "solid": { "value": "#B5412A", "type": "color" }
+      }
+    }
+  },
+  "spacing": {
+    "1": { "value": "4", "type": "spacing" },
+    "2": { "value": "8", "type": "spacing" },
+    "3": { "value": "12", "type": "spacing" },
+    "4": { "value": "16", "type": "spacing" },
+    "5": { "value": "20", "type": "spacing" },
+    "6": { "value": "24", "type": "spacing" },
+    "8": { "value": "32", "type": "spacing" }
+  },
+  "size": {
+    "touchMin": { "value": "48", "type": "sizing" },
+    "touchPrimary": { "value": "56", "type": "sizing" }
+  },
+  "radius": {
+    "card": { "value": "12", "type": "borderRadius" },
+    "control": { "value": "10", "type": "borderRadius" },
+    "pill": { "value": "999", "type": "borderRadius" }
+  },
+  "typography": {
+    "family": { "value": "Inter", "type": "fontFamilies", "description": "Placeholder: any clean sans-serif with clear numerals" },
+    "display": { "value": { "fontSize": "28", "lineHeight": "34", "fontWeight": "700" }, "type": "typography", "description": "Big metric numbers" },
+    "title": { "value": { "fontSize": "20", "lineHeight": "26", "fontWeight": "600" }, "type": "typography" },
+    "body": { "value": { "fontSize": "16", "lineHeight": "24", "fontWeight": "400" }, "type": "typography" },
+    "label": { "value": { "fontSize": "14", "lineHeight": "20", "fontWeight": "500" }, "type": "typography" },
+    "caption": { "value": { "fontSize": "12", "lineHeight": "16", "fontWeight": "400" }, "type": "typography" }
+  }
+}
