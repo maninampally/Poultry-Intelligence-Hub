@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Poultry Intelligence",
+    "slug": "poultry-intelligence",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "poultryintelligence",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#FAF6EC"
+    },
+    "android": {
+      "package": "com.murgimitra.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1F5C3A"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.murgimitra.app",
+      "supportsTablet": true
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

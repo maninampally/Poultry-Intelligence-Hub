@@ -1,0 +1,42 @@
+{
+  "common": {
+    "appName": "Poultry Intelligence",
+    "normal": "Normal",
+    "watch": "Watch",
+    "act": "Act",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "sync": {
+    "saved": "Saved on device",
+    "pending": "Sync pending",
+    "syncing": "Syncing",
+    "synced": "Synced",
+    "failed": "Sync failed"
+  },
+  "metrics": {
+    "feed": "Feed",
+    "deaths": "Deaths",
+    "weight": "Average weight",
+    "water": "Water",
+    "fcr": "FCR",
+    "livability": "Livability",
+    "mortality": "Mortality",
+    "fcrExplain": "FCR is feed used per kg of weight gain. Lower is better."
+  },
+  "home": {
+    "scaffoldDescription": "Scaffold ready. Open the component preview below.",
+    "componentPreview": "Component preview",
+    "greetingMorning": "Good morning",
+    "needsAttention": "Here's what needs your attention today.",
+    "nothingToday": "Nothing needs attention today.",
+    "todaysNumbers": "Today's numbers",
+    "quickActions": "Quick actions"
+  },
+  "alert": {
+    "viewTrend": "View trend",
+    "recordObservation": "Record observation",
+    "askAi": "Ask AI"
+  }
+}
