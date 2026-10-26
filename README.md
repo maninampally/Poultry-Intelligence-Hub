@@ -143,3 +143,18 @@ npm run dev
 The web app uses Vite with React and TypeScript. Its domain calculations are in
 [`src/domain/`](./src/domain/), and its farm screens are in
 [`src/pages/`](./src/pages/).
+
+### Deploy the web UI on Vercel
+
+Import this repository into Vercel with the project root set to `/`. Vercel
+will use [`vercel.json`](./vercel.json) to build and serve only the root Vite
+web application:
+
+```text
+Build command: npm run build
+Output directory: dist
+Install command: npm install
+```
+
+The FastAPI API, Expo mobile app, Celery worker, and Supabase migrations are
+not deployed by this Vercel project.
