@@ -1,0 +1,4 @@
+# Poultry Intelligence Hub — background worker dependencies
+celery==5.4.0
+redis==5.2.1
+asyncpg==0.30.0

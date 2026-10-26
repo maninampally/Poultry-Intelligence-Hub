@@ -1,0 +1,81 @@
+# Local development stack for Poultry Intelligence Hub.
+# Postgres (source of truth), Redis (queue/cache), FastAPI, Celery worker.
+# The mobile app (Expo) runs on the host, not in compose.
+#
+#   docker compose up --build
+#
+# Migrations: apply supabase/migrations/*.sql to the postgres service.
+# A convenience 'migrate' one-shot service applies them in order.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pih}
+      POSTGRES_DB: ${POSTGRES_DB:-pih}
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: apply the auth stub (local only) + all migrations in order.
+  migrate:
+    image: postgres:16
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-pih}
+    volumes:
+      - ./supabase:/supabase:ro
+    entrypoint: >
+      bash -c '
+      set -e;
+      psql -h postgres -U postgres -d ${POSTGRES_DB:-pih} -v ON_ERROR_STOP=1 -c "create extension if not exists pgcrypto;";
+      psql -h postgres -U postgres -d ${POSTGRES_DB:-pih} -v ON_ERROR_STOP=1 -f /supabase/test/0000_auth_stub.sql;
+      for f in /supabase/migrations/*.sql; do
+        echo "applying $$f";
+        psql -h postgres -U postgres -d ${POSTGRES_DB:-pih} -v ON_ERROR_STOP=1 -f "$$f";
+      done;
+      echo "migrations complete";
+      '
+
+  api:
+    build: ./apps/api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-pih}@postgres:5432/${POSTGRES_DB:-pih}
+      JWT_SECRET: ${JWT_SECRET:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./apps/worker
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-pih}@postgres:5432/${POSTGRES_DB:-pih}
+
+volumes:
+  pgdata:
