@@ -127,3 +127,19 @@ push notifications, and the remaining record/finance screens. See
 Breed targets, alert thresholds, and real contract settlement formulas are
 intentionally **placeholders** marked in code — they come from `DECISIONS.md`
 (BUILD_GUIDE Phase 0) which the farm owner/vet supplies.
+
+## Web application
+
+The repository also includes a Vite React web application under [`src/`](./src)
+for browser-based farm operations and dashboards.
+
+Install and run it from the repository root:
+
+```bash
+npm install
+npm run dev
+```
+
+The web app uses Vite with React and TypeScript. Its domain calculations are in
+[`src/domain/`](./src/domain/), and its farm screens are in
+[`src/pages/`](./src/pages/).
