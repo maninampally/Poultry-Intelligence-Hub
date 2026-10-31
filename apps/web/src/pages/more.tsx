@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Bird, ClipboardList, Factory, Skull, Sprout } from "lucide-react"
+import { Bird, Check, ClipboardList, Factory, Pencil, Skull, Sprout, X } from "lucide-react"
 import { ColorStat } from "@/components/farm/color"
 import { PageHeader, StatusPill } from "@/components/farm/chrome"
 import { showCount } from "@/domain/format"
@@ -174,13 +174,21 @@ export function ExportPage() {
 export function SettingsPage() {
   const farm = useFarm()
   const [name, setName] = useState(farm.settings.farmName)
+  const [location, setLocation] = useState(farm.settings.location)
+  const [timezone, setTimezone] = useState(farm.settings.timezone)
   const [feedUnit, setFeedUnit] = useState<"kg" | "bags">(farm.settings.feedUnit)
   const [bagSize, setBagSize] = useState(
     farm.settings.defaultBagKg === null ? "" : String(farm.settings.defaultBagKg),
   )
   const [bagError, setBagError] = useState("")
+  const [editing, setEditing] = useState(false)
 
-  function saveFeedUnit() {
+  function saveSettings() {
+    const trimmedName = name.trim()
+    if (trimmedName.length < 2) {
+      toast.error("Enter a farm name with at least 2 letters.")
+      return
+    }
     if (feedUnit === "bags") {
       const parsed = Number(bagSize)
       if (bagSize.trim() === "" || !Number.isFinite(parsed) || parsed <= 0) {
@@ -188,12 +196,26 @@ export function SettingsPage() {
         return
       }
       setBagError("")
-      farm.dispatch({ type: "update-settings", patch: { feedUnit: "bags", defaultBagKg: parsed } })
+      farm.dispatch({ type: "update-settings", patch: { farmName: trimmedName, location: location.trim(), timezone, notifications, feedUnit: "bags", defaultBagKg: parsed } })
     } else {
       setBagError("")
-      farm.dispatch({ type: "update-settings", patch: { feedUnit: "kg", defaultBagKg: null } })
+      farm.dispatch({ type: "update-settings", patch: { farmName: trimmedName, location: location.trim(), timezone, notifications, feedUnit: "kg", defaultBagKg: null } })
     }
-    toast.success("Feed unit saved on this device.")
+    setEditing(false)
+    toast.success("Settings saved on this device.")
+  }
+
+  const [notifications, setNotifications] = useState(farm.settings.notifications)
+
+  function cancelSettings() {
+    setName(farm.settings.farmName)
+    setLocation(farm.settings.location)
+    setTimezone(farm.settings.timezone)
+    setFeedUnit(farm.settings.feedUnit)
+    setBagSize(farm.settings.defaultBagKg === null ? "" : String(farm.settings.defaultBagKg))
+    setNotifications(farm.settings.notifications)
+    setBagError("")
+    setEditing(false)
   }
 
   return (
@@ -203,29 +225,47 @@ export function SettingsPage() {
         title="Settings"
         description="Demo mode. Records stay in this browser until you reset them."
       />
-      <Card>
+      {editing ? (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-accent px-4 py-3 text-sm text-accent-foreground" role="status">
+          <div>
+            <p className="font-semibold">Editing farm settings</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Changes are pending until you select Save changes.</p>
+          </div>
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Edit mode</span>
+        </div>
+      ) : null}
+      <Card className={editing ? "border-primary/40 shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_10%,transparent)]" : undefined}>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Farm preferences</CardTitle>
+            <CardDescription>Changes are only applied when you save.</CardDescription>
+          </div>
+          {!editing ? (
+            <Button variant="outline" className="h-10" onClick={() => setEditing(true)}>
+              <Pencil data-icon="inline-start" /> Edit settings
+            </Button>
+          ) : null}
+        </CardHeader>
         <CardContent className="grid gap-4 pt-4">
           <div className="grid gap-1.5">
             <Label htmlFor="farm-name">Farm name</Label>
-            <Input id="farm-name" className="h-11" value={name} onChange={(event) => setName(event.target.value)} />
+            <Input id="farm-name" className={`h-11 text-foreground disabled:opacity-100 disabled:text-foreground ${editing ? "bg-accent/35" : "bg-background"}`} value={name} onChange={(event) => setName(event.target.value)} disabled={!editing} />
           </div>
-          <Button
-            className="h-11 w-fit"
-            onClick={() => {
-              farm.dispatch({ type: "update-settings", patch: { farmName: name } })
-              toast.success("Farm name saved on this device.")
-            }}
-          >
-            Save profile
-          </Button>
-          <label className="flex h-11 items-center justify-between gap-3 rounded-lg border px-3 text-sm">
+          <div className="grid gap-1.5">
+            <Label htmlFor="farm-location">Farm location</Label>
+            <Input id="farm-location" className={`h-11 text-foreground disabled:opacity-100 disabled:text-foreground ${editing ? "bg-accent/35" : "bg-background"}`} value={location} onChange={(event) => setLocation(event.target.value)} disabled={!editing} placeholder="Village, district, state" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="farm-timezone">Farm timezone</Label>
+            <select id="farm-timezone" className={`h-11 rounded-lg border border-input px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-100 disabled:text-foreground ${editing ? "bg-accent/35" : "bg-background"}`} value={timezone} onChange={(event) => setTimezone(event.target.value)} disabled={!editing}>
+              <option value="Asia/Kolkata">India Standard Time (IST)</option>
+              <option value="Asia/Dhaka">Bangladesh Standard Time</option>
+              <option value="Asia/Kathmandu">Nepal Time</option>
+            </select>
+          </div>
+          <label className={`flex h-11 items-center justify-between gap-3 rounded-lg border px-3 text-sm ${editing ? "bg-accent/35" : "bg-background"}`}>
             Notifications
-            <Switch
-              checked={farm.settings.notifications}
-              onCheckedChange={(checked) =>
-                farm.dispatch({ type: "update-settings", patch: { notifications: checked } })
-              }
-            />
+            <Switch checked={notifications} disabled={!editing} className="data-disabled:opacity-100" onCheckedChange={setNotifications} />
           </label>
           <div className="grid gap-3 border-t pt-4">
             <FeedUnitField
@@ -238,12 +278,16 @@ export function SettingsPage() {
               }}
               onBagSizeChange={(value) => setBagSize(value)}
               bagSizeError={bagError}
+              disabled={!editing}
             />
-            <Button className="h-12 w-fit" onClick={saveFeedUnit}>
-              Save feed unit
-            </Button>
           </div>
           <p className="text-sm text-muted-foreground">Water is in litres and money in rupees. Dates follow India.</p>
+          {editing ? (
+            <div className="flex flex-wrap gap-2 border-t pt-4">
+              <Button className="h-11" onClick={saveSettings}><Check data-icon="inline-start" /> Save changes</Button>
+              <Button variant="outline" className="h-11" onClick={cancelSettings}><X data-icon="inline-start" /> Cancel</Button>
+            </div>
+          ) : null}
           <Button
             variant="outline"
             className="h-11 w-fit"
