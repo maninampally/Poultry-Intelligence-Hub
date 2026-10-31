@@ -193,16 +193,20 @@ export function AppShell() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#e5f5ef] text-xs font-bold text-[#087f73] shadow-[0_4px_14px_rgba(30,59,46,0.05)]"
+                    className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5f5ef] text-xs font-bold text-[#087f73] shadow-[0_4px_14px_rgba(30,59,46,0.05)]"
                     aria-label="Profile menu"
                   >
-                    {farm.currentUser
-                      ? farm.currentUser.name
-                          .split(" ")
-                          .map((part) => part[0])
-                          .slice(0, 2)
-                          .join("")
-                      : <UserRound className="size-4" />}
+                    {farm.currentUser?.avatar ? (
+                      <img src={farm.currentUser.avatar} alt="" className="size-full object-cover" />
+                    ) : farm.currentUser ? (
+                      farm.currentUser.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .slice(0, 2)
+                        .join("")
+                    ) : (
+                      <UserRound className="size-4" />
+                    )}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -281,14 +285,18 @@ export function AppShell() {
               onClick={() => setMoreOpen(false)}
               className="flex h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium"
             >
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#e5f5ef] text-xs font-bold text-[#087f73]">
-                {farm.currentUser
-                  ? farm.currentUser.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join("")
-                  : <UserRound className="size-4" />}
+              <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5f5ef] text-xs font-bold text-[#087f73]">
+                {farm.currentUser?.avatar ? (
+                  <img src={farm.currentUser.avatar} alt="" className="size-full object-cover" />
+                ) : farm.currentUser ? (
+                  farm.currentUser.name
+                    .split(" ")
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")
+                ) : (
+                  <UserRound className="size-4" />
+                )}
               </span>
               {farm.currentUser?.name ?? "Profile"}
             </NavLink>
