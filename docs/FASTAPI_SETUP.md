@@ -317,7 +317,7 @@ Generates closeout report (PDF or JSON).
 DATABASE_URL=postgresql://user:pass@prod-db:5432/poultry_intelligence
 REDIS_URL=redis://prod-redis:6379/0
 JWT_SECRET=<generate_32_char_random>
-ALLOWED_ORIGINS=https://app.murgimitra.com,https://api.murgimitra.com
+ALLOWED_ORIGINS=https://app.poultry-intelligence-hub.example.com,https://api.poultry-intelligence-hub.example.com
 NODE_ENV=production
 ```
 

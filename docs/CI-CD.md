@@ -2,7 +2,7 @@
 
 ## Overview
 
-Murgi Mitra uses automated CI/CD pipelines with **GitHub Actions** only to ensure code quality, security, and reliable deployments.
+Poultry Intelligence Hub uses automated CI/CD pipelines with **GitHub Actions** only to ensure code quality, security, and reliable deployments.
 
 **Two separate workflows:**
 - **CI Pipeline** - Code quality, testing, security scanning
@@ -84,7 +84,7 @@ Runs on every push and pull request to ensure code quality.
 
 **Status Badge:**
 ```markdown
-![CI Pipeline](https://github.com/your-org/murgi-mitra-site/actions/workflows/ci.yml/badge.svg)
+![CI Pipeline](https://github.com/your-org/poultry-intelligence-hub/actions/workflows/ci.yml/badge.svg)
 ```
 
 ---
@@ -106,14 +106,14 @@ Builds and deploys the application. Automatically runs after CI passes.
    - **When:** After images build successfully
    - **Type:** Automatic deployment
    - **Checks:** Health checks validate deployment
-   - **Environment URL:** `https://staging.murgi-mitra.example.com`
+   - **Environment URL:** `https://staging.poultry-intelligence-hub.example.com`
 
 3. **Deploy Production**
    - **Trigger:** Push to `main` branch
    - **When:** After images build successfully
    - **Type:** Manual approval required via GitHub UI
    - **Checks:** Health checks validate deployment
-   - **Environment URL:** `https://murgi-mitra.example.com`
+   - **Environment URL:** `https://poultry-intelligence-hub.example.com`
    - **Notifications:** Slack status updates
 
 **Triggers:**
@@ -134,10 +134,10 @@ Add these secrets to your GitHub repository:
 | Secret | Description | Example |
 |--------|-------------|---------|
 | `SLACK_WEBHOOK` | Slack webhook for notifications | `https://hooks.slack.com/...` |
-| `STAGING_DEPLOY_HOST` | Staging server hostname | `staging.murgi-mitra.com` |
+| `STAGING_DEPLOY_HOST` | Staging server hostname | `staging.poultry-intelligence-hub.example.com` |
 | `STAGING_DEPLOY_USER` | SSH user for staging | `deploy` |
 | `STAGING_DEPLOY_KEY` | Private SSH key for staging | (multiline key) |
-| `PROD_DEPLOY_HOST` | Production server hostname | `murgi-mitra.com` |
+| `PROD_DEPLOY_HOST` | Production server hostname | `poultry-intelligence-hub.example.com` |
 | `PROD_DEPLOY_USER` | SSH user for production | `deploy` |
 | `PROD_DEPLOY_KEY` | Private SSH key for production | (multiline key) |
 
@@ -145,7 +145,7 @@ Add these secrets to your GitHub repository:
 
 ### GitHub Container Registry
 
-Docker images are pushed to: `ghcr.io/your-org/murgi-mitra-site-{api|worker|web}`
+Docker images are pushed to: `ghcr.io/your-org/poultry-intelligence-hub-{api|worker|web}`
 
 Enable in repo: **Settings → Packages → Container registry**
 
@@ -168,7 +168,7 @@ Health checks validate deployment
     ↓
 Slack notification sent
     ↓
-Live at: https://staging.murgi-mitra.example.com
+Live at: https://staging.poultry-intelligence-hub.example.com
 ```
 
 ### Production Deployment
@@ -190,7 +190,7 @@ Health checks validate deployment
     ↓
 Slack notification sent
     ↓
-Live at: https://murgi-mitra.example.com
+Live at: https://poultry-intelligence-hub.example.com
 ```
 
 ---
@@ -208,7 +208,7 @@ Automatic notifications for:
 
 **Notification format:**
 ```
-Murgi Mitra - CI Pipeline
+Poultry Intelligence Hub - CI Pipeline
 Status: Success
 Branch: refs/heads/develop
 Commit: a1b2c3d...
@@ -244,7 +244,7 @@ Each build creates multiple tags:
 - `v1.0.0` - Semantic version tags
 - `sha-a1b2c3d` - Git commit SHA
 
-Example: `ghcr.io/org/murgi-mitra-web:develop`, `ghcr.io/org/murgi-mitra-web:v1.0.0`, `ghcr.io/org/murgi-mitra-web:sha-a1b2c3d`
+Example: `ghcr.io/org/poultry-intelligence-web:develop`, `ghcr.io/org/poultry-intelligence-web:v1.0.0`, `ghcr.io/org/poultry-intelligence-web:sha-a1b2c3d`
 
 ---
 
@@ -253,7 +253,7 @@ Example: `ghcr.io/org/murgi-mitra-web:develop`, `ghcr.io/org/murgi-mitra-web:v1.
 ### Staging Health Check
 
 ```bash
-curl -f https://staging.murgi-mitra.example.com/health
+curl -f https://staging.poultry-intelligence-hub.example.com/health
 ```
 
 Response (200 OK):
@@ -264,7 +264,7 @@ Response (200 OK):
 ### Production Health Check
 
 ```bash
-curl -f https://murgi-mitra.example.com/health
+curl -f https://poultry-intelligence-hub.example.com/health
 ```
 
 Health check failure triggers rollback if enabled.

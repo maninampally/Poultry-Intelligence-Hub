@@ -1,4 +1,4 @@
-# Poultry Intelligence Hub (Murgi Mitra)
+# Poultry Intelligence Hub
 
 A mobile-first operating companion for Indian broiler farmers. It turns farm
 data into clear, actionable decisions: a farmer should understand the flock
@@ -43,13 +43,14 @@ PostgreSQL (Supabase) — source of truth, Row-Level Security
 
 ```
 apps/
+  web/        Vite React web UI (farm ops dashboard + launch/auth)
   api/        FastAPI backend + deterministic analytics engine (+ tests)
   worker/     Celery background worker (Redis)
   mobile/     Expo React Native app (offline-first)
 supabase/
   migrations/ Ordered SQL migrations (0001..0008)
   test/       Auth stub + migration/RLS smoke tests
-docs/         Data model, system design, sync protocol, FastAPI setup
+docs/         Data model, system design, sync protocol, architecture
 design/       pih-design-tokens.json (design system source of truth)
 docker-compose.yml   Local dev: postgres, redis, api, worker, migrate
 ```
@@ -130,27 +131,33 @@ intentionally **placeholders** marked in code — they come from `DECISIONS.md`
 
 ## Web application
 
-The repository also includes a Vite React web application under [`src/`](./src)
-for browser-based farm operations and dashboards.
+The Vite React web UI lives under [`apps/web/`](./apps/web) (browser farm
+operations, launch page, and local demo auth).
 
-Install and run it from the repository root:
+From the repository root:
 
 ```bash
+npm run dev          # delegates to apps/web
+```
+
+Or directly:
+
+```bash
+cd apps/web
 npm install
 npm run dev
 ```
 
-The web app uses Vite with React and TypeScript. Its domain calculations are in
-[`src/domain/`](./src/domain/), and its farm screens are in
-[`src/pages/`](./src/pages/).
+Domain calculations: [`apps/web/src/domain/`](./apps/web/src/domain/)  
+Farm screens: [`apps/web/src/pages/`](./apps/web/src/pages/)
 
 ### Deploy the web UI on Vercel
 
-Import this repository into Vercel with the project root set to `/`. Vercel
-will use [`vercel.json`](./vercel.json) to build and serve only the root Vite
-web application:
+Import this repository into Vercel and set **Root Directory** to `apps/web`.
+Vercel will use [`apps/web/vercel.json`](./apps/web/vercel.json):
 
 ```text
+Root Directory: apps/web
 Build command: npm run build
 Output directory: dist
 Install command: npm install

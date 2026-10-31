@@ -311,8 +311,8 @@ Even if layers 1 and 2 are bypassed (bug), RLS prevents cross-tenant data access
 
 ```
 DNS (Cloudflare)
-  ├── app.murgimitra.com   →  Netlify (React PWA, CDN-cached)
-  └── api.murgimitra.com   →  Render / AWS ALB
+  ├── app.poultry-intelligence-hub.example.com   →  Netlify (React PWA, CDN-cached)
+  └── api.poultry-intelligence-hub.example.com   →  Render / AWS ALB
                                  ├── FastAPI instance 1
                                  ├── FastAPI instance 2
                                  └── FastAPI instance N (auto-scale)

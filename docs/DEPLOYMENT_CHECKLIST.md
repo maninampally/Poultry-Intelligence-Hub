@@ -1,4 +1,4 @@
-# Deployment Checklist - Murgi Mitra
+# Deployment Checklist - Poultry Intelligence Hub
 
 Comprehensive checklist covering CI/CD setup, infrastructure preparation, security review, and post-deployment verification.
 
@@ -44,15 +44,15 @@ Comprehensive checklist covering CI/CD setup, infrastructure preparation, securi
 - [ ] Deploy user created: `sudo useradd -m deploy`
 - [ ] Deploy user added to docker group: `sudo usermod -aG docker deploy`
 - [ ] SSH directory created: `mkdir -p ~/.ssh`
-- [ ] Deployment directory created: `sudo mkdir -p /app/murgi-mitra-site`
-- [ ] Permissions set: `sudo chown deploy:deploy /app/murgi-mitra-site`
+- [ ] Deployment directory created: `sudo mkdir -p /app/poultry-intelligence-hub`
+- [ ] Permissions set: `sudo chown deploy:deploy /app/poultry-intelligence-hub`
 - [ ] Git repository cloned
 - [ ] `.env` file configured (copy from `.env.example`)
 - [ ] Nginx reverse proxy configured
 - [ ] SSL certificate installed (self-signed OK for staging)
 - [ ] PostgreSQL database initialized
 - [ ] Redis instance running
-- [ ] Health endpoint accessible: `curl https://staging.murgi-mitra.example.com/health`
+- [ ] Health endpoint accessible: `curl https://staging.poultry-intelligence-hub.example.com/health`
 
 ### Production Server Preparation
 
@@ -79,7 +79,7 @@ Comprehensive checklist covering CI/CD setup, infrastructure preparation, securi
 - [ ] HTTP to HTTPS redirect enabled
 - [ ] Security headers configured (HSTS, CSP, etc.)
 - [ ] Rate limiting configured in Nginx
-- [ ] Health endpoint accessible: `curl https://murgi-mitra.example.com/health`
+- [ ] Health endpoint accessible: `curl https://poultry-intelligence-hub.example.com/health`
 
 ---
 
@@ -206,8 +206,8 @@ Comprehensive checklist covering CI/CD setup, infrastructure preparation, securi
 **Immediate (within 5 minutes):**
 - [ ] All containers running: `docker-compose -f docker-compose.production.yml ps`
 - [ ] No error logs: `docker-compose -f docker-compose.production.yml logs --tail=100`
-- [ ] API responds: `curl https://murgi-mitra.example.com/health`
-- [ ] Frontend loads: `curl -L https://murgi-mitra.example.com`
+- [ ] API responds: `curl https://poultry-intelligence-hub.example.com/health`
+- [ ] Frontend loads: `curl -L https://poultry-intelligence-hub.example.com`
 - [ ] SSL certificate valid and not expired
 - [ ] Database connected and responsive
 - [ ] Redis responsive
@@ -246,7 +246,7 @@ Health check failures trigger automatic rollback:
 
 ```bash
 # SSH to staging server
-ssh deploy@staging.murgi-mitra.example.com
+ssh deploy@staging.poultry-intelligence-hub.example.com
 
 # View git history
 git log --oneline -10
@@ -267,7 +267,7 @@ curl http://localhost:8000/health
 
 ```bash
 # SSH to production server
-ssh deploy@murgi-mitra.example.com
+ssh deploy@poultry-intelligence-hub.example.com
 
 # Create backup before rollback
 docker-compose -f docker-compose.production.yml exec -T postgres pg_dump \
@@ -285,7 +285,7 @@ docker-compose -f docker-compose.production.yml up -d
 docker-compose -f docker-compose.production.yml exec -T api alembic upgrade head
 
 # Verify health
-curl https://murgi-mitra.example.com/health
+curl https://poultry-intelligence-hub.example.com/health
 
 # Notify team
 # Slack message: "Production rolled back to [version] due to [reason]"
@@ -306,7 +306,7 @@ curl https://murgi-mitra.example.com/health
 
 **Fix:**
 ```bash
-[ ] docker build -f Dockerfile -t murgi-mitra-web .
+[ ] docker build -f Dockerfile -t poultry-intelligence-web .
 [ ] Check Docker logs for details
 [ ] Fix issues locally and test
 [ ] Push fixed code

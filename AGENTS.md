@@ -24,12 +24,18 @@ Mobile-first app for Indian broiler farmers (contract and independent). Goal: tu
 
 ## Structure
 ```
-app/            Expo Router screens
-components/ui/  generic components (Button, Card, Chip, Input)
-components/poultry/  MetricCard, AlertCard, FlockStatusCard, SyncChip, ...
-lib/            money.ts, fcr.ts, sync/, db/
-locales/        en.json
+apps/web/       Vite React browser UI
+apps/api/       FastAPI backend
+apps/mobile/    Expo app:
+  app/            Expo Router screens
+  components/ui/  generic components (Button, Card, Chip, Input)
+  components/poultry/  MetricCard, AlertCard, FlockStatusCard, SyncChip, ...
+  lib/            money.ts, fcr.ts, sync/, db/
+  locales/        en.json
+apps/worker/    Celery worker
+supabase/       Postgres migrations + RLS
 design/         pih-design-tokens.json
+docs/           Architecture and engineering docs
 ```
 
 ## Working style

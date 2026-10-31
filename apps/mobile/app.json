@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Poultry Intelligence",
-    "slug": "poultry-intelligence",
+    "name": "Poultry Intelligence Hub",
+    "slug": "poultry-intelligence-hub",
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "poultryintelligence",
@@ -11,13 +11,13 @@
       "backgroundColor": "#FAF6EC"
     },
     "android": {
-      "package": "com.murgimitra.app",
+      "package": "com.poultryintelligencehub.app",
       "adaptiveIcon": {
         "backgroundColor": "#1F5C3A"
       }
     },
     "ios": {
-      "bundleIdentifier": "com.murgimitra.app",
+      "bundleIdentifier": "com.poultryintelligencehub.app",
       "supportsTablet": true
     },
     "plugins": ["expo-router"],
