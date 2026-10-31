@@ -332,10 +332,16 @@ export interface PurchasePlan {
 export interface TeamMember {
   id: string
   name: string
+  email?: string
+  phone?: string
   role: Role
   shed: string
   status: "active" | "inactive"
   passcode: string
+  personalNotifications?: boolean
+  language?: "English"
+  /** Optional profile photo as a small, resized data URL (local-only). */
+  avatar?: string
 }
 
 export interface Sop {

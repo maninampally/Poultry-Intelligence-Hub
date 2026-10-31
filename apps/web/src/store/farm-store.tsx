@@ -71,8 +71,19 @@ function loadState(): FarmState {
         onboarding: parsed.onboarding ?? { status: "completed", draft: null },
         team: parsed.team.map((member) =>
           member.id === "user-owner" && member.name === "Meena Krishnan"
-            ? { ...member, name: "Manikanth", passcode: "Mani@12345" }
-            : { ...member, passcode: member.passcode ?? "demo1234" },
+            ? {
+                ...member,
+                name: "Manikanth",
+                passcode: "Mani@12345",
+                personalNotifications: member.personalNotifications ?? true,
+                language: member.language ?? "English",
+              }
+            : {
+                ...member,
+                passcode: member.passcode ?? "demo1234",
+                personalNotifications: member.personalNotifications ?? true,
+                language: member.language ?? "English",
+              },
         ),
       }
     }
