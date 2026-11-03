@@ -61,13 +61,17 @@ This plan is ordered for **shortest path to correct product behavior**. Do not j
 
 **Goal:** Live metrics are rebuildable and shared; API and worker use one engine.
 
-| # | Work item | Done when |
-|---|-----------|-----------|
-| 2.1 | Shared Python package (or path) for `apps/api` analytics used by worker | No duplicated formulas |
-| 2.2 | Implement `rebuild_flock_metrics` → upsert `flock_metrics` | Worker no longer `noop-scaffold` |
-| 2.3 | Enqueue rebuild from domain writes / sync apply | Projections update after sync |
-| 2.4 | Chick / breed weight from config or breed table | Remove hard-coded `0.045` in analytics router |
-| 2.5 | Implement `evaluate_alerts` for mortality/feed runway rules | Notifications rows with reason + action |
+**Branch:** `feat/phase-2-projections-alerts`
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 2.1 | Shared package `packages/pih_analytics` | API + worker import one engine | Done in branch |
+| 2.2 | `rebuild_flock_metrics` → `app_upsert_flock_metrics` | Worker writes `flock_metrics` | Done in branch |
+| 2.3 | Enqueue from daily upsert + sync push | Redis tasks after writes | Done in branch |
+| 2.4 | Chick weight from `CHICK_PLACEMENT_WEIGHT_KG` / settings | No hard-coded literal in router | Done (config; breed table later) |
+| 2.5 | `evaluate_alerts` mortality watch/act placeholders | Notifications via `app_insert_notification` | Done (thresholds placeholder) |
+
+**Follow-up:** breed standards table; feed runway from stock; dedupe alert spam; wire GET metrics to prefer `flock_metrics` projection.
 
 ---
 

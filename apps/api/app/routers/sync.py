@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from app import db
 from app.auth import AuthContext, get_auth
+from app.jobs import enqueue_flock_rebuild
 from app.sync_apply import PULLABLE_TABLES, PUSHABLE_TABLES, apply_operation
 
 router = APIRouter(prefix="/api/v1/sync", tags=["sync"])
@@ -103,6 +104,7 @@ async def push(body: PushRequest, auth: AuthContext = Depends(get_auth)) -> dict
 
     results: list[dict[str, Any]] = []
     accepted = duplicates = failed = 0
+    flocks_to_rebuild: set[str] = set()
 
     async with db.acquire(auth.user_id) as conn:
         # Prove device belongs to this org (RLS + explicit check).
@@ -213,6 +215,9 @@ async def push(body: PushRequest, auth: AuthContext = Depends(get_auth)) -> dict
                         sync_id,
                     )
                     accepted += 1
+                    flock_hint = op.data.get("flock_id") or op.data.get("flockId")
+                    if flock_hint:
+                        flocks_to_rebuild.add(str(flock_hint))
                     results.append(
                         {
                             "idempotency_key": op.idempotency_key,
@@ -238,6 +243,9 @@ async def push(body: PushRequest, auth: AuthContext = Depends(get_auth)) -> dict
                             "error": str(exc),
                         }
                     )
+
+    for flock_id in flocks_to_rebuild:
+        enqueue_flock_rebuild(flock_id)
 
     return {
         "results": results,

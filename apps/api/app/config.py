@@ -32,6 +32,12 @@ class Settings(BaseSettings):
 
     environment: str = Field(default="local")
 
+    # Celery broker (same Redis as worker)
+    redis_url: str = Field(default="redis://localhost:6379/0")
+
+    # PLACEHOLDER chick weight until breed standards table exists
+    chick_placement_weight_kg: float = Field(default=0.045)
+
     @property
     def cors_origins(self) -> list[str]:
         if self.allowed_origins.strip() == "*":

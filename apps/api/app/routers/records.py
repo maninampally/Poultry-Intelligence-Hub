@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app import db
 from app.auth import AuthContext, get_auth
+from app.jobs import enqueue_flock_rebuild
 
 router = APIRouter(prefix="/api/v1/records", tags=["records"])
 
@@ -68,4 +69,5 @@ async def upsert_daily(
             body.water_l, body.deaths, body.avg_weight_kg, body.notes,
             is_complete, auth.user_id,
         )
+    enqueue_flock_rebuild(body.flock_id)
     return dict(row)

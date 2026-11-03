@@ -12,7 +12,6 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app import db
 from app.analytics import (
-    average_weight_kg,
     current_birds,
     fcr,
     livability_pct,
@@ -20,13 +19,16 @@ from app.analytics import (
 )
 from app.analytics.metrics import age_in_days
 from app.auth import AuthContext, get_auth
+from app.config import Settings, get_settings
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
 
 @router.get("/flocks/{flock_id}/metrics")
 async def flock_metrics(
-    flock_id: str, auth: AuthContext = Depends(get_auth)
+    flock_id: str,
+    auth: AuthContext = Depends(get_auth),
+    settings: Settings = Depends(get_settings),
 ) -> dict:
     async with db.acquire(auth.user_id) as conn:
         flock = await conn.fetchrow(
@@ -70,12 +72,12 @@ async def flock_metrics(
         age = age_in_days(flock["placed_on"], date.today())
 
     avg_w = float(latest_weight) if latest_weight is not None else None
-    # live weight gain assumes ~0.045 kg chick placement weight (placeholder).
+    chick_w = settings.chick_placement_weight_kg
     gain = None
     provisional_fcr = None
     if avg_w is not None and birds > 0:
         total_live_weight = avg_w * birds
-        gain = total_live_weight - (0.045 * placed)  # PLACEHOLDER chick weight
+        gain = total_live_weight - (chick_w * placed)
         provisional_fcr = fcr(feed_kg, gain) if gain and gain > 0 else None
 
     # Livability = sold / placed (post-lifting). Null until at least one lift.

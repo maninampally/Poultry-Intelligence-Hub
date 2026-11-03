@@ -57,9 +57,13 @@ services:
       '
 
   api:
-    build: ./apps/api
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       # pih_app has no BYPASSRLS — created in migration 0009
@@ -67,18 +71,27 @@ services:
       JWT_SECRET: ${JWT_SECRET:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
       ENVIRONMENT: ${ENVIRONMENT:-local}
+      REDIS_URL: redis://redis:6379/0
+      CHICK_PLACEMENT_WEIGHT_KG: ${CHICK_PLACEMENT_WEIGHT_KG:-0.045}
     ports:
       - "8000:8000"
 
   worker:
-    build: ./apps/worker
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     environment:
       REDIS_URL: redis://redis:6379/0
       DATABASE_URL: postgresql://pih_app:${PIH_APP_PASSWORD:-pih_app}@postgres:5432/${POSTGRES_DB:-pih}
       ENVIRONMENT: ${ENVIRONMENT:-local}
+      CHICK_PLACEMENT_WEIGHT_KG: ${CHICK_PLACEMENT_WEIGHT_KG:-0.045}
+      ALERT_MORTALITY_WATCH_PCT: ${ALERT_MORTALITY_WATCH_PCT:-3.0}
+      ALERT_MORTALITY_ACT_PCT: ${ALERT_MORTALITY_ACT_PCT:-5.0}
 
 volumes:
   pgdata:
