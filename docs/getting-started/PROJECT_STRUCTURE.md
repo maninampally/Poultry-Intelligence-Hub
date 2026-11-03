@@ -22,15 +22,21 @@ Poultry-Intelligence-Hub/
 │   ├── migrations/          # Postgres schema + RLS (0001–0008)
 │   └── test/                # RLS / migration smoke tests
 ├── design/                  # Design tokens (pih-design-tokens.json)
-├── docs/                    # Architecture & engineering docs
+├── docs/                    # Organized documentation (see docs/README.md)
+│   ├── getting-started/     # Quick start + this structure guide
+│   ├── architecture/        # System design, data model, sync
+│   ├── engineering/         # Implementation guides
+│   ├── ops/                 # CI/CD + deployment
+│   ├── product/             # Marketing / product plans
+│   ├── ai/                  # Map of AI tool files
 │   └── archive/             # Zips / historical bundles
+├── .cursor/rules/           # Cursor always-on project rules
+├── .kiro/                   # Kiro steering + specs
 ├── docker-compose.yml       # Local postgres, redis, api, worker, migrate
 ├── package.json             # Root convenience scripts → apps/web
 ├── .env.example
-├── AGENTS.md
-├── README.md
-├── QUICKSTART.md
-└── PROJECT_STRUCTURE.md     # This file
+├── AGENTS.md                # Root AI agent instructions (keep at root)
+└── README.md
 ```
 
 ### What lives where
@@ -44,7 +50,10 @@ Poultry-Intelligence-Hub/
 | Mobile app | `apps/mobile/` |
 | Database schema | `supabase/migrations/` |
 | Design tokens | `design/pih-design-tokens.json` |
-| Long-form architecture | `docs/poultry-intelligence-advanced-system-architecture-v1.1.md` |
+| Long-form architecture | `docs/architecture/poultry-intelligence-advanced-system-architecture-v1.1.md` |
+| Docs index | `docs/README.md` |
+| AI tool map | `docs/ai/README.md` |
+| Cursor rules | `.cursor/rules/` |
 
 ---
 

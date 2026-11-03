@@ -35,8 +35,12 @@ apps/mobile/    Expo app:
 apps/worker/    Celery worker
 supabase/       Postgres migrations + RLS
 design/         pih-design-tokens.json
-docs/           Architecture and engineering docs
+docs/           Organized docs — see docs/README.md
+.cursor/rules/  Cursor project rules (mirrors these constraints)
+.kiro/          Kiro steering + feature specs
 ```
+
+Docs map: [`docs/ai/README.md`](./docs/ai/README.md). Prefer linking into `docs/` over duplicating long design text here.
 
 ## Working style
 - Make small, reviewable changes. One component or one screen per task.

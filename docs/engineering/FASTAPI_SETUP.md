@@ -438,4 +438,4 @@ redis-server  # macOS: brew services start redis
 
 ## Questions?
 
-See `docs/SYSTEM_DESIGN.md` for full architecture and scalability decisions.
+See `docs/architecture/SYSTEM_DESIGN.md` for full architecture and scalability decisions.
