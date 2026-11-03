@@ -44,12 +44,16 @@ This plan is ordered for **shortest path to correct product behavior**. Do not j
 
 **Goal:** A daily record saved on device becomes durable server state without double-writing via ad-hoc CRUD only.
 
-| # | Work item | Done when |
-|---|-----------|-----------|
-| 1.1 | Sync push **applies** whitelisted ops to domain tables (or relays to worker that applies) | Push mutates `daily_records` / event tables, not only `sync_operations` |
-| 1.2 | Require `device_id` on push; fix NULL uniqueness hole | Duplicate retries stay safe |
-| 1.3 | Wire mobile `sync_queue` → `POST /api/v1/sync/push` | Queue drains; sync chip moves pending → synced/failed |
-| 1.4 | Pull: keyset `(updated_at, id)`, soft-delete tombstones, persist `sync_cursors` | Multi-device catch-up without skips/dups |
+**Branch:** `feat/phase-1-sync-loop` (from Phase 0)
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 1.1 | Sync push **applies** whitelisted ops (`daily_records`, `mortality_records`) | Push mutates domain tables + logs `sync_operations` | Done in branch |
+| 1.2 | Require `device_id` on push; migration `0010` NOT NULL | Duplicate retries stay safe; failed keys can retry | Done in branch |
+| 1.3 | Mobile `drainSyncQueue` / `registerSyncDevice` → `POST /api/v1/sync/push` | Queue drains; `sync_status` → synced/failed | Done in branch (call from UI/session next) |
+| 1.4 | Pull: keyset `(updated_at, id)`, tombstones, `sync_cursors` | Multi-device catch-up without skips/dups | Done in branch |
+
+**Follow-up (still open):** hook `drainSyncQueue` into app session/UI; persist `deviceId` in secure storage; apply path for remaining event tables (`feed_records`, …).
 
 ---
 
