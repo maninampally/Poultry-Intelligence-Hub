@@ -8,6 +8,7 @@
 | Layer | Path | Notes |
 |-------|------|-------|
 | API | `apps/api/` | FastAPI + asyncpg + JWT; DB role `pih_app` (no BYPASSRLS) |
+| Secrets | `.env` (gitignored) | Set `POSTGRES_PASSWORD` / `PIH_APP_PASSWORD` locally — never commit them; migrate applies `ALTER ROLE pih_app` |
 | Shared analytics | `packages/pih_analytics/` | Deterministic FCR/mortality/settlement (paise) |
 | Worker | `apps/worker/` | Celery: `pih.rebuild_flock_metrics`, `pih.evaluate_alerts` |
 | DB | `supabase/migrations/0001`–`0011` | Flocks/daily records + sync + projections helpers |

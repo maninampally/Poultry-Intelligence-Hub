@@ -5,13 +5,14 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- Application role (no BYPASSRLS). Local default password: pih_app
--- Production: ALTER ROLE pih_app PASSWORD '...'; rotate via secrets manager.
+-- Application role (no BYPASSRLS). Password is NOT set here — the local
+-- migrate entrypoint (or ops) runs: ALTER ROLE pih_app PASSWORD '...';
+-- Never commit real passwords into SQL.
 -- ---------------------------------------------------------------------
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname = 'pih_app') then
-    create role pih_app login password 'pih_app';
+    create role pih_app login nosuperuser nocreatedb nocreaterole nobypassrls;
   end if;
 end
 $$;
