@@ -1,6 +1,6 @@
 // Local SQLite schema + migration runner (expo-sqlite).
 // Offline-first: writes go to SQLite first, then a sync_queue row, in one
-// transaction (AGENTS.md rule #6). Sync engine itself is a later phase.
+// transaction (AGENTS.md rule #6). Drain the queue with lib/sync (Phase 1).
 import * as SQLite from 'expo-sqlite';
 
 const DB_NAME = 'pih.db';

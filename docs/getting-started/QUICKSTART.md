@@ -8,10 +8,19 @@ Get Poultry Intelligence running locally in 5 minutes.
 
 ## With Docker Compose (Easiest)
 
+### 0. Create a private `.env`
+
+```bash
+cp .env.example .env
+# Set POSTGRES_PASSWORD and PIH_APP_PASSWORD (and DATABASE_URL) in .env only.
+# Do not commit .env — passwords must not live in git.
+```
+
 ### 1. Start all services
 
 ```bash
-docker-compose up
+docker compose up --build
+docker compose run --rm migrate
 ```
 
 Wait for all containers to be healthy:

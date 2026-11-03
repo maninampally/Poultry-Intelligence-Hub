@@ -32,11 +32,38 @@ class Settings(BaseSettings):
 
     environment: str = Field(default="local")
 
+    # Celery broker (same Redis as worker)
+    redis_url: str = Field(default="redis://localhost:6379/0")
+
+    # PLACEHOLDER chick weight until breed standards table exists
+    chick_placement_weight_kg: float = Field(default=0.045)
+
+    # In-process rate limit (non-local). 0 disables.
+    rate_limit_per_minute: int = Field(default=120)
+
     @property
     def cors_origins(self) -> list[str]:
         if self.allowed_origins.strip() == "*":
             return ["*"]
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
+
+    @property
+    def allows_unverified_jwt(self) -> bool:
+        """Dev-only: empty JWT_SECRET is permitted in local/dev/test."""
+        return self.environment.strip().lower() in {"local", "dev", "test"}
+
+    def validate_security(self) -> None:
+        """Fail closed outside local: JWT_SECRET and explicit CORS required."""
+        if self.allows_unverified_jwt:
+            return
+        if not self.jwt_secret.strip():
+            raise RuntimeError(
+                "JWT_SECRET must be set when ENVIRONMENT is not local/dev/test"
+            )
+        if self.allowed_origins.strip() == "*":
+            raise RuntimeError(
+                "ALLOWED_ORIGINS must not be '*' when ENVIRONMENT is not local/dev/test"
+            )
 
 
 @lru_cache

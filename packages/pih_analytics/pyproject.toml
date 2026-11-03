@@ -1,0 +1,12 @@
+[project]
+name = "pih-analytics"
+version = "0.1.0"
+description = "Deterministic poultry analytics shared by API and worker"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pih_analytics*"]

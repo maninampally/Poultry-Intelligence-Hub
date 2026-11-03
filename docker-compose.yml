@@ -2,17 +2,18 @@
 # Postgres (source of truth), Redis (queue/cache), FastAPI, Celery worker.
 # The mobile app (Expo) runs on the host, not in compose.
 #
+#   cp .env.example .env   # then set POSTGRES_PASSWORD and PIH_APP_PASSWORD
 #   docker compose up --build
+#   docker compose run --rm migrate
 #
-# Migrations: apply supabase/migrations/*.sql to the postgres service.
-# A convenience 'migrate' one-shot service applies them in order.
+# Passwords must come from the environment / .env — never hardcode them here.
 
 services:
   postgres:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pih}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-pih}
     ports:
       - "55432:5432"
@@ -34,48 +35,68 @@ services:
       timeout: 5s
       retries: 10
 
-  # One-shot: apply the auth stub (local only) + all migrations in order.
+  # One-shot: auth stub + migrations, then set pih_app password from env.
   migrate:
     image: postgres:16
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD:-pih}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-pih}
+      PIH_APP_PASSWORD: ${PIH_APP_PASSWORD:?Set PIH_APP_PASSWORD in .env}
     volumes:
       - ./supabase:/supabase:ro
     entrypoint: >
       bash -c '
-      set -e;
-      psql -h postgres -U postgres -d ${POSTGRES_DB:-pih} -v ON_ERROR_STOP=1 -c "create extension if not exists pgcrypto;";
-      psql -h postgres -U postgres -d ${POSTGRES_DB:-pih} -v ON_ERROR_STOP=1 -f /supabase/test/0000_auth_stub.sql;
+      set -euo pipefail;
+      psql -h postgres -U postgres -d "$$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "create extension if not exists pgcrypto;";
+      psql -h postgres -U postgres -d "$$POSTGRES_DB" -v ON_ERROR_STOP=1 -f /supabase/test/0000_auth_stub.sql;
       for f in /supabase/migrations/*.sql; do
         echo "applying $$f";
-        psql -h postgres -U postgres -d ${POSTGRES_DB:-pih} -v ON_ERROR_STOP=1 -f "$$f";
+        psql -h postgres -U postgres -d "$$POSTGRES_DB" -v ON_ERROR_STOP=1 -f "$$f";
       done;
+      psql -h postgres -U postgres -d "$$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+        -c "alter role pih_app with login password '"'"'$$PIH_APP_PASSWORD'"'"';";
       echo "migrations complete";
       '
 
   api:
-    build: ./apps/api
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-pih}@postgres:5432/${POSTGRES_DB:-pih}
+      # pih_app has no BYPASSRLS — created in migration 0009; password via env
+      DATABASE_URL: postgresql://pih_app:${PIH_APP_PASSWORD:?Set PIH_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-pih}
       JWT_SECRET: ${JWT_SECRET:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      REDIS_URL: redis://redis:6379/0
+      CHICK_PLACEMENT_WEIGHT_KG: ${CHICK_PLACEMENT_WEIGHT_KG:-0.045}
     ports:
       - "8000:8000"
 
   worker:
-    build: ./apps/worker
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-pih}@postgres:5432/${POSTGRES_DB:-pih}
+      DATABASE_URL: postgresql://pih_app:${PIH_APP_PASSWORD:?Set PIH_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-pih}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      CHICK_PLACEMENT_WEIGHT_KG: ${CHICK_PLACEMENT_WEIGHT_KG:-0.045}
+      ALERT_MORTALITY_WATCH_PCT: ${ALERT_MORTALITY_WATCH_PCT:-3.0}
+      ALERT_MORTALITY_ACT_PCT: ${ALERT_MORTALITY_ACT_PCT:-5.0}
 
 volumes:
   pgdata:

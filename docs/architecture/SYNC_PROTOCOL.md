@@ -1,5 +1,10 @@
 # Sync Protocol — Phase 4
 
+> **Phase 4 doc truth:** The browser localStorage ↔ Supabase flow below is the **legacy/demo web** story.
+> Canonical offline path today: **Expo mobile SQLite `sync_queue` → FastAPI `/api/v1/sync/*`**
+> (`apps/mobile/src/lib/sync/`, `apps/api/app/routers/sync.py`).
+> Web remains demo-only. Overview: [`../engineering/AS_BUILT.md`](../engineering/AS_BUILT.md).
+
 Manual offline-first sync between browser and Supabase.
 
 ---

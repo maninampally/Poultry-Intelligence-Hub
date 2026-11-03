@@ -1,0 +1,146 @@
+# Build phases — path to a trustworthy offline farm OS
+
+> **As-built overview:** [`AS_BUILT.md`](./AS_BUILT.md)  
+> Phases 0–4 live on feature branches (`feat/build-phases-p0-foundation` … `feat/phase-4-hardening-docs`).
+
+This plan is ordered for **shortest path to correct product behavior**. Do not jump to scale (100k farmers, event-ledger rewrite) until Phases 0–2 are proven in use.
+
+---
+
+## Reality check (after Phases 0–4)
+
+| Capability | Status |
+|------------|--------|
+| Migrations `0001`–`0011`, RLS + SQL smoke test | Done |
+| FastAPI CRUD + settlements/expenses | Done |
+| Shared `pih_analytics` + unit tests | Done |
+| Sync push apply (daily + mortality) + keyset pull | Done (Phase 1) |
+| Celery projections + mortality alerts | Done (Phase 2) |
+| Mobile `drainSyncQueue` helper | Done; UI session hook still open |
+| Web → API | Demo-only (explicit in README) |
+| GitHub Actions CI | Done (pytest, RLS, web build) |
+| Doc truth / health split / CORS+rate limit | Done (Phase 4) |
+| `farm_events` ledger | **Deferred** — see [`../architecture/EVENT_LEDGER_DECISION.md`](../architecture/EVENT_LEDGER_DECISION.md) |
+
+---
+
+## Phase 0 — Correctness & security foundation *(this branch)*
+
+**Goal:** Make the local/prod story honest: RLS actually applies under the API role, JWT cannot fail open outside local, metrics read the same facts farmers enter, and CI catches regressions.
+
+| # | Work item | Done when |
+|---|-----------|-----------|
+| 0.1 | Non-bypass DB role `pih_app` for API/worker | Compose/prod use `pih_app`; RLS tests still pass |
+| 0.2 | JWT fail-closed outside `local`/`dev`/`test` | App refuses to start (or rejects auth) without `JWT_SECRET` |
+| 0.3 | Align `app_flock_mortality` / `app_flock_feed_kg` with `daily_records` | Daily round deaths/feed affect metrics |
+| 0.4 | Fix livability semantics on analytics endpoint | Uses birds sold (lifting), not live birds; else `null` |
+| 0.5 | Minimal CI | `pytest` + RLS script + web build on PR |
+
+**Out of scope for Phase 0:** full sync apply, mobile wiring, settlement API, event ledger.
+
+---
+
+## Phase 1 — Offline sync loop
+
+**Goal:** A daily record saved on device becomes durable server state without double-writing via ad-hoc CRUD only.
+
+**Branch:** `feat/phase-1-sync-loop` (from Phase 0)
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 1.1 | Sync push **applies** whitelisted ops (`daily_records`, `mortality_records`) | Push mutates domain tables + logs `sync_operations` | Done in branch |
+| 1.2 | Require `device_id` on push; migration `0010` NOT NULL | Duplicate retries stay safe; failed keys can retry | Done in branch |
+| 1.3 | Mobile `drainSyncQueue` / `registerSyncDevice` → `POST /api/v1/sync/push` | Queue drains; `sync_status` → synced/failed | Done in branch (call from UI/session next) |
+| 1.4 | Pull: keyset `(updated_at, id)`, tombstones, `sync_cursors` | Multi-device catch-up without skips/dups | Done in branch |
+
+**Follow-up (still open):** hook `drainSyncQueue` into app session/UI; persist `deviceId` in secure storage; apply path for remaining event tables (`feed_records`, …).
+
+---
+
+## Phase 2 — Projections & shared analytics
+
+**Goal:** Live metrics are rebuildable and shared; API and worker use one engine.
+
+**Branch:** `feat/phase-2-projections-alerts`
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 2.1 | Shared package `packages/pih_analytics` | API + worker import one engine | Done in branch |
+| 2.2 | `rebuild_flock_metrics` → `app_upsert_flock_metrics` | Worker writes `flock_metrics` | Done in branch |
+| 2.3 | Enqueue from daily upsert + sync push | Redis tasks after writes | Done in branch |
+| 2.4 | Chick weight from `CHICK_PLACEMENT_WEIGHT_KG` / settings | No hard-coded literal in router | Done (config; breed table later) |
+| 2.5 | `evaluate_alerts` mortality watch/act placeholders | Notifications via `app_insert_notification` | Done (thresholds placeholder) |
+
+**Follow-up:** breed standards table; feed runway from stock; dedupe alert spam; wire GET metrics to prefer `flock_metrics` projection.
+
+---
+
+## Phase 3 — Finance & product APIs
+
+**Goal:** Manager-facing money flows use integer paise and existing settlement engine.
+
+**Branch:** `feat/phase-3-finance-apis`
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 3.1 | Settlement + expenses HTTP APIs | `POST /settlements/compute`, GET/confirm; expenses list/create/delete | Done in branch |
+| 3.2 | Worker denied finance | Covered by `supabase/test/rls_test.sql` S3/S4 + API mapper unit tests | Done (RLS suite + unit) |
+| 3.3 | `app_can_access_flock` shed scoping | Deferred — keep helper; revisit when shed assignment UX exists | Deferred |
+| 3.4 | Web demo-only clarity | README states web is localStorage demo, not API-backed | Done in branch |
+
+---
+
+## Phase 4 — Hardening & doc truth
+
+**Goal:** Process speed and trust: docs match code; scale work is intentional.
+
+**Branch:** `feat/phase-4-hardening-docs`
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 4.1 | Archive/redirect stale IMPLEMENTATION_SUMMARY; banner FASTAPI_SETUP + SYNC_PROTOCOL; add AS_BUILT | Clear as-built vs target | Done in branch |
+| 4.2 | `row_dict` on CRUD routers; JSON logging outside local; `/health/live` + `/ready` | Clients get string UUIDs; probes split | Done in branch |
+| 4.3 | Reject `ALLOWED_ORIGINS=*`; in-process rate limit when non-local | Staging cannot boot with open CORS | Done in branch |
+| 4.4 | Event ledger decision doc | Defer until row-sync proven insufficient | Done — deferred |
+
+---
+
+## Explicit non-goals (until Phase 2+ is green)
+
+- 100k-farmer / 2k req/s load claims without load tests  
+- Read replicas, S3 PDFs, full AI assistant  
+- Rebase/rewrite of already-merged PR history on `main`  
+- Building the SYSTEM_DESIGN event ledger before sync apply works  
+
+---
+
+## Suggested sequencing on the calendar
+
+```
+Week 1–2   Phase 0  (this branch → PR)
+Week 3–5   Phase 1  (sync apply + mobile push)
+Week 6–8   Phase 2  (projections + alerts)
+Week 9–10  Phase 3  (finance APIs + web decision)
+Ongoing    Phase 4  (docs/CI hardening)
+```
+
+---
+
+## How to verify Phase 0
+
+```bash
+# Analytics unit tests
+cd apps/api && python -m venv .venv && . .venv/bin/activate
+pip install -r requirements-dev.txt && pytest -q
+
+# RLS (needs Docker)
+bash supabase/test/run_rls_test.sh
+
+# Stack with pih_app
+cp .env.example .env
+docker compose up --build
+docker compose run --rm migrate
+curl -s http://localhost:8000/health
+```
+
+See also: [`../architecture/SYSTEM_DESIGN.md`](../architecture/SYSTEM_DESIGN.md) (target), [`FASTAPI_SETUP.md`](./FASTAPI_SETUP.md), [`../ai/README.md`](../ai/README.md).

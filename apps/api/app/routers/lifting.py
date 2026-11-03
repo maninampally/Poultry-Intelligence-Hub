@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app import db
 from app.auth import AuthContext, get_auth
+from app.serialize import row_dict
 
 router = APIRouter(prefix="/api/v1/lifting", tags=["lifting"])
 
@@ -45,7 +46,7 @@ async def list_lifting(
             """,
             flock_id,
         )
-    return [dict(r) for r in rows]
+    return [row_dict(r) for r in rows]
 
 
 @router.post("", status_code=201)
@@ -79,4 +80,4 @@ async def create_lifting(
             weight, body.rate_paise_per_kg, gross, body.adjustments_paise,
             net, body.is_final, auth.user_id,
         )
-    return dict(row)
+    return row_dict(row)

@@ -1,2 +1,2 @@
-"""API routers, organized by domain (health, auth, farms, flocks, records,
-lifting, sync, analytics)."""
+"""API routers by domain (health, auth, farms, flocks, records, lifting,
+settlements, expenses, sync, analytics)."""

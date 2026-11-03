@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app import db
 from app.auth import AuthContext, get_auth
+from app.serialize import row_dict
 
 router = APIRouter(prefix="/api/v1/flocks", tags=["flocks"])
 
@@ -53,7 +54,7 @@ async def list_flocks(auth: AuthContext = Depends(get_auth)) -> list[dict]:
             order by created_at desc
             """
         )
-    return [dict(r) for r in rows]
+    return [row_dict(r) for r in rows]
 
 
 @router.post("", status_code=201)
@@ -72,7 +73,7 @@ async def create_flock(
             body.org_id, body.farm_id, body.shed_id, body.name,
             body.placed_on, body.birds_placed, body.breed, auth.user_id,
         )
-    return dict(row)
+    return row_dict(row)
 
 
 @router.post("/{flock_id}/status")

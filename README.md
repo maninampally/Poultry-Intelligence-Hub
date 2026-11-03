@@ -122,19 +122,22 @@ From `AGENTS.md` — the non-negotiables the code follows:
 
 ## Status
 
-This is a **foundation scaffold** (BUILD_GUIDE phases 1–3 plus the analytics
-and settlement engine). Not yet built: the full sync engine, AI assistant,
-push notifications, and the remaining record/finance screens. See
-`BUILD_GUIDE_END_TO_END.md` for the phased plan.
+Active delivery plan: [`docs/engineering/BUILD_PHASES.md`](./docs/engineering/BUILD_PHASES.md)
+(Phases 0–2 landed on feature branches; Phase 3 adds finance HTTP APIs).
 
 Breed targets, alert thresholds, and real contract settlement formulas are
-intentionally **placeholders** marked in code — they come from `DECISIONS.md`
-(BUILD_GUIDE Phase 0) which the farm owner/vet supplies.
+intentionally **placeholders** marked in code — they come from farm/vet
+`DECISIONS` inputs, not invented defaults.
 
 ## Web application
 
-The Vite React web UI lives under [`apps/web/`](./apps/web) (browser farm
-operations, launch page, and local demo auth).
+The Vite React web UI lives under [`apps/web/`](./apps/web).
+
+**Demo-only today:** farm screens use local domain math + `localStorage`
+(`apps/web/src/store/`). They are **not** wired to FastAPI. Treat web as a
+UI/marketing/demo surface until a later phase connects it to `/api/v1`.
+
+Canonical offline + API path for farm operations is **mobile → sync → API**.
 
 From the repository root:
 
@@ -150,8 +153,8 @@ npm install
 npm run dev
 ```
 
-Domain calculations: [`apps/web/src/domain/`](./apps/web/src/domain/)  
-Farm screens: [`apps/web/src/pages/`](./apps/web/src/pages/)
+Domain calculations (demo): [`apps/web/src/domain/`](./apps/web/src/domain/)  
+Farm screens (demo): [`apps/web/src/pages/`](./apps/web/src/pages/)
 
 ### Deploy the web UI on Vercel
 

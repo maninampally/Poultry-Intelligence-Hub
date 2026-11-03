@@ -1,5 +1,10 @@
 # FastAPI Backend Implementation
 
+> **Phase 4 doc truth:** Paths like `api/routes/` and Express/`batches` below are **stale**.
+> As-built API lives in `apps/api/app/` (farms, flocks, records, sync, settlements, expenses).
+> Canonical overview: [`AS_BUILT.md`](./AS_BUILT.md) · plan: [`BUILD_PHASES.md`](./BUILD_PHASES.md).
+> Treat Express / `farm_events` / `rebuild_batch_metrics` sections as **target/history**, not current code.
+
 Complete Python/FastAPI backend replacing Node.js/Express, with Celery workers for async tasks.
 
 ---

@@ -21,6 +21,8 @@ Poultry-Intelligence-Hub/
 ├── supabase/
 │   ├── migrations/          # Postgres schema + RLS (0001–0008)
 │   └── test/                # RLS / migration smoke tests
+├── packages/
+│   └── pih_analytics/       # Shared deterministic analytics (API + worker)
 ├── design/                  # Design tokens (pih-design-tokens.json)
 ├── docs/                    # Organized documentation (see docs/README.md)
 │   ├── getting-started/     # Quick start + this structure guide
