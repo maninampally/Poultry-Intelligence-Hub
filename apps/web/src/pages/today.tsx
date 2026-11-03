@@ -1,4 +1,7 @@
-import type { ReactNode } from "react"
+/**
+ * U1 Home — flock status in 5–10 seconds.
+ * One status + one alert + morning-round CTA + sync. No decorative charts.
+ */
 import { Link } from "react-router-dom"
 import {
   AlertTriangle,
@@ -6,50 +9,53 @@ import {
   CheckCircle2,
   ClipboardCheck,
   CloudOff,
-  HeartPulse,
+  Eye,
   RefreshCw,
-  Scale,
-  Sparkles,
-  Wheat,
   Wifi,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { BarTrend } from "@/components/farm/charts"
-import { ColorStat, Meter } from "@/components/farm/color"
-import { PageHeader } from "@/components/farm/chrome"
-import { canSeeFinance, sum } from "@/domain/calc"
-import { financeOf } from "@/domain/finance"
-import { formatDay, formatFeed, formatInr, formatNumber, isoOffset, showCount } from "@/domain/format"
+import { PageHeader, StatusPill } from "@/components/farm/chrome"
+import { formatFeed, formatNumber, showCount } from "@/domain/format"
 import { pendingSyncCount, useFarm } from "@/store/farm-store"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
-const rowTones = [
-  "bg-sky-50 text-sky-700",
-  "bg-violet-50 text-violet-700",
-  "bg-emerald-50 text-emerald-700",
-  "bg-amber-50 text-amber-700",
-  "bg-rose-50 text-rose-700",
-]
+type FlockStatus = "Normal" | "Watch" | "Act"
 
-const healthTone: Record<string, string> = {
-  Good: "text-emerald-600",
-  Watch: "text-amber-600",
-  "At risk": "text-orange-600",
+function flockStatus(args: {
+  runwayDays: number | null
+  todayMortality: number | null
+  urgentAlerts: number
+  score: number | null
+}): FlockStatus {
+  if (
+    args.urgentAlerts > 0 ||
+    (args.runwayDays !== null && args.runwayDays < 3) ||
+    (args.todayMortality !== null && args.todayMortality > 15)
+  ) {
+    return "Act"
+  }
+  if (
+    (args.runwayDays !== null && args.runwayDays < 7) ||
+    (args.score !== null && args.score < 70) ||
+    (args.todayMortality !== null && args.todayMortality > 5)
+  ) {
+    return "Watch"
+  }
+  return "Normal"
 }
 
-function taskMark(severity: string) {
-  if (severity === "urgent") {
-    return { label: "At risk", level: "High", labelClass: "text-orange-600", levelClass: "text-orange-500" }
-  }
-  if (severity === "due") {
-    return { label: "Due", level: "Medium", labelClass: "text-amber-600", levelClass: "text-amber-500" }
-  }
-  if (severity === "attention") {
-    return { label: "Watch", level: "Medium", labelClass: "text-amber-600", levelClass: "text-amber-500" }
-  }
-  return { label: "Open", level: "", labelClass: "text-muted-foreground", levelClass: "text-muted-foreground" }
+function statusTone(status: FlockStatus): "good" | "warn" | "bad" {
+  if (status === "Normal") return "good"
+  if (status === "Watch") return "warn"
+  return "bad"
+}
+
+function StatusIcon({ status }: { status: FlockStatus }) {
+  if (status === "Normal") return <CheckCircle2 className="size-5" aria-hidden />
+  if (status === "Watch") return <Eye className="size-5" aria-hidden />
+  return <AlertTriangle className="size-5" aria-hidden />
 }
 
 export function TodayPage() {
@@ -57,393 +63,216 @@ export function TodayPage() {
   if (!farm.batch || farm.state.batches.length === 0) {
     return <DashboardEmptyState />
   }
-  const finance = financeOf(farm.state)
-  const openTasks = farm.tasks.filter((task) => task.status !== "resolved")
+
   const openAlerts = farm.alerts.filter((alert) => alert.status !== "resolved")
-  const atRisk =
-    openAlerts.filter((alert) => alert.severity === "urgent").length +
-    openTasks.filter((task) => task.severity === "urgent").length +
-    (farm.runwayDays !== null && farm.runwayDays < 7 ? 1 : 0)
+  const urgentAlerts = openAlerts.filter((alert) => alert.severity === "urgent").length
   const score =
     farm.completeness.expected === 0
       ? null
       : Math.round((farm.completeness.recorded / farm.completeness.expected) * 100)
-  const health =
-    (farm.runwayDays !== null && farm.runwayDays < 3) ||
-    (farm.todayMortality !== null && farm.todayMortality > 15)
-      ? "At risk"
-      : score !== null && score >= 70
-        ? "Good"
-        : "Watch"
-  const roundLabel = !farm.todayRound ? "Not started" : farm.todayRound.draft ? "Draft" : "Recorded"
-  const runway = farm.runwayDays === null ? "Unknown" : `${formatNumber(farm.runwayDays, 1)} days`
+  const status = flockStatus({
+    runwayDays: farm.runwayDays,
+    todayMortality: farm.todayMortality,
+    urgentAlerts,
+    score,
+  })
+  const roundDone = Boolean(farm.todayRound && !farm.todayRound.draft)
+  const roundLabel = !farm.todayRound ? "Not started" : farm.todayRound.draft ? "Draft" : "Done"
   const pending = pendingSyncCount(farm.state)
-
-  const trendDays = [-6, -5, -4, -3, -2, -1, 0].map((offset) => isoOffset(offset))
-  const trend = trendDays.map((date) => ({
-    date,
-    water: sum(
-      farm.state.water
-        .filter((record) => record.batchId === farm.batch?.id && record.date === date)
-        .map((record) => record.litres),
-    ),
-    feed: sum(
-      farm.state.feed
-        .filter(
-          (movement) =>
-            movement.batchId === farm.batch?.id && movement.reason === "issued" && movement.date === date,
-        )
-        .map((movement) => movement.kg),
-    ),
-  }))
-
   const topAlert = openAlerts.find((alert) => alert.severity === "urgent") ?? openAlerts[0]
+  const runway =
+    farm.runwayDays === null ? "Unknown" : `${formatNumber(farm.runwayDays, 1)} days left`
 
-  const activity = [
-    ...farm.state.rounds.map((item) => ({
-      id: item.id,
-      date: item.date,
-      sync: item.sync,
-      label: item.draft ? "Daily round started" : "Daily round recorded",
-    })),
-    ...farm.state.mortality.map((item) => ({
-      id: item.id,
-      date: item.date,
-      sync: item.sync,
-      label: `Mortality recorded · ${showCount(item.count, "birds")}`,
-    })),
-    ...farm.state.feed
-      .filter((item) => item.reason !== "opening")
-      .map((item) => ({
-        id: item.id,
-        date: item.date,
-        sync: item.sync,
-        label: `Feed stock updated · ${formatNumber(item.kg)} kg`,
-      })),
-  ]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 4)
+  const meaning =
+    status === "Act"
+      ? "Something needs action today — open the alert or finish the morning round."
+      : status === "Watch"
+        ? "Keep an eye on this flock. Log deaths and feed if you have not yet."
+        : "Flock looks steady. Still log the morning round so nothing is missed."
 
   return (
-    <div>
+    <div className="mx-auto max-w-lg">
       {pending > 0 ? (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#e7c98e] bg-[#fff8e9] px-4 py-3 text-[#805514]">
-          <CloudOff className="size-4 shrink-0" />
+        <div
+          className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950"
+          role="status"
+        >
+          <CloudOff className="size-4 shrink-0" aria-hidden />
           <p className="flex-1 text-sm">
-            <span className="font-semibold text-[#64400b]">{pending} {pending === 1 ? "record" : "records"}</span>{" "}
-            saved locally. Nothing has reached a server in this demo.
+            <span className="font-semibold">{pending} {pending === 1 ? "record" : "records"}</span>{" "}
+            saved on this device. Demo has not sent them to a server.
           </p>
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#087f73]"
+            className="inline-flex min-h-12 items-center gap-1.5 text-sm font-semibold text-teal-800"
             onClick={() => {
               farm.dispatch({ type: "sync-now" })
               toast.success("Marked synced in this demo. Nothing was sent to a server.")
             }}
           >
-            <RefreshCw className="size-3.5" />
+            <RefreshCw className="size-3.5" aria-hidden />
             Sync now
           </button>
         </div>
-      ) : null}
+      ) : (
+        <div
+          className="mb-4 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground"
+          role="status"
+        >
+          <Wifi className="size-3.5 text-emerald-600" aria-hidden />
+          Demo sync clear — nothing waiting on this device.
+        </div>
+      )}
 
       <PageHeader
-        eyebrow={farm.settings.location}
-        title="What needs you now"
-        description={`${farm.batch?.code ?? "No open batch"} · ${farm.batch?.breed ?? "Breed not set"}.`}
+        eyebrow={farm.settings.location || "Your farm"}
+        title="Today"
+        description={`${farm.batch.code} · Day ${farm.day} · ${farm.batch.breed}`}
       />
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <div className="min-h-[8.25rem] rounded-[13px] border border-t-[3px] border-border bg-card px-4 py-3.5 shadow-[0_7px_20px_rgba(33,61,46,0.045)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(33,61,46,0.10)]" style={{ borderTopColor: health === "Good" ? "#0e9a6e" : health === "Watch" ? "#d99735" : "#d9733a" }}>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">Flock health</p>
+      {/* Hero: status */}
+      <Card className="mb-3">
+        <CardContent className="space-y-4 pt-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Flock status
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <StatusPill
+                  tone={statusTone(status)}
+                  icon={
+                    status === "Normal"
+                      ? CheckCircle2
+                      : status === "Watch"
+                        ? Eye
+                        : AlertTriangle
+                  }
+                >
+                  {status}
+                </StatusPill>
+              </div>
+            </div>
             <span
               className={cn(
-                "flex size-7 shrink-0 items-center justify-center rounded-[9px]",
-                health === "Good" && "bg-[#e5f5ef] text-[#0e9a6e]",
-                health === "Watch" && "bg-[#fff3df] text-[#b8670b]",
-                health === "At risk" && "bg-orange-50 text-orange-600",
+                "flex size-12 items-center justify-center rounded-2xl",
+                status === "Normal" && "bg-emerald-50 text-emerald-700",
+                status === "Watch" && "bg-amber-50 text-amber-800",
+                status === "Act" && "bg-orange-50 text-orange-700",
               )}
+              aria-hidden
             >
-              <HeartPulse className="size-3.5" />
+              <StatusIcon status={status} />
             </span>
           </div>
-          <p className={cn("mt-4 text-[1.7rem] leading-none font-bold tracking-tight", healthTone[health])}>
-            {health}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {score === null ? (
-              "No fields expected yet."
-            ) : (
-              <>
-                <span className={cn("font-bold", healthTone[health])}>{score}</span>
-                <span className="font-semibold">/100</span> record coverage this week.
-              </>
-            )}
-          </p>
-          <div className="mt-3">
-            <Meter
-              value={score ?? 0}
-              tone={health === "Good" ? "good" : health === "Watch" ? "warn" : "alert"}
-            />
-          </div>
-        </div>
-        <ColorStat label="Live birds" value={formatNumber(farm.live)} hint={`Day ${farm.day} of this batch.`} icon={Bird} swatch="blue" />
-        <ColorStat label="Your turn" value={String(openTasks.length)} hint="Open tasks waiting on this farm." icon={ClipboardCheck} swatch="purple" />
-        <ColorStat
-          label="At risk"
-          value={String(atRisk)}
-          hint="Urgent work, plus a short feed runway."
-          tone={atRisk > 0 ? "alert" : "default"}
-          icon={AlertTriangle}
-          swatch="amber"
-        />
-        <ColorStat
-          label="Recorded today"
-          value={roundLabel}
-          hint={
-            farm.todayMortality === null
-              ? "Mortality not recorded."
-              : `${showCount(farm.todayMortality, "dead")} counted.`
-          }
-          tone={roundLabel === "Recorded" ? "good" : "default"}
-          icon={CheckCircle2}
-          swatch="teal"
-        />
-      </section>
-
-      <section className="mt-5 grid items-start gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(16rem,0.9fr)]">
-        <Card className="rounded-[13px] shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
-          <CardContent className="space-y-2">
-            <div className="pb-1">
-              <p className="text-sm font-bold">Your turn</p>
-              <p className="text-xs text-muted-foreground">Open work on this batch.</p>
-            </div>
-            {openTasks.length === 0 ? (
-              <p className="py-6 text-sm text-muted-foreground">No open tasks.</p>
-            ) : (
-              openTasks.slice(0, 5).map((task, index) => {
-                const mark = taskMark(task.severity)
-                const borderColor =
-                  task.severity === "urgent" ? "#df8a34" : task.severity === "due" ? "#4c9e9a" : "#8d6abb"
-                return (
-                  <div
-                    key={task.id}
-                    className="flex items-center gap-3 rounded-[10px] border border-border py-3 pr-3 pl-3.5 transition-all hover:translate-x-[3px] hover:shadow-[0_8px_22px_rgba(33,61,46,0.09)]"
-                    style={{ borderLeftWidth: 3, borderLeftColor: borderColor }}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-[10px]",
-                        rowTones[index % rowTones.length],
-                      )}
-                    >
-                      <ClipboardCheck className="size-3.5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">{task.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">{task.detail}</p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p className="flex items-center justify-end gap-2 text-xs font-semibold">
-                        <span className={mark.labelClass}>{mark.label}</span>
-                        {mark.level ? <span className={mark.levelClass}>{mark.level}</span> : null}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{formatDay(task.due)}</p>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-            <Button variant="ghost" asChild className="h-8 px-0 text-muted-foreground">
-              <Link to="/tasks">View all tasks</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-3">
-          <SideQueue
-            title="At risk"
-            count={openAlerts.length}
-            hint="Alerts still open on this farm."
-            tone={openAlerts.length > 0 ? "alert" : "default"}
-          >
-            {openAlerts.slice(0, 3).map((alert) => (
-              <p key={alert.id} className={cn("text-sm font-medium", alert.severity === "urgent" && "text-orange-700")}>
-                {alert.title}
-              </p>
-            ))}
-            {openAlerts.length === 0 ? <p className="text-sm text-muted-foreground">Nothing open.</p> : null}
-          </SideQueue>
-          <SideQueue title="Feed runway" count={runway} hint={farm.recentUseKg === null ? "Not enough confirmed use." : `${formatFeed(farm.stockKg, farm.settings.feedUnit, farm.settings.defaultBagKg)} on hand.`} tone={farm.runwayDays !== null && farm.runwayDays < 7 ? "alert" : "default"}>
-            <p className="text-sm text-muted-foreground">
-              {farm.recentUseKg === null
-                ? "A runway stays unknown until three confirmed use days exist."
-                : `${formatFeed(farm.recentUseKg, farm.settings.feedUnit, farm.settings.defaultBagKg)} recent daily use.`}
-            </p>
-          </SideQueue>
-          <SideQueue title="Today's round" count={roundLabel} hint={`${farm.completeness.recorded}/${farm.completeness.expected} fields in 7 days.`}>
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Bird className="size-3.5" />
-              {showCount(farm.todayMortality, "dead")}
-            </p>
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Wheat className="size-3.5" />
-              {farm.stockKg === null ? "Stock unknown" : `${formatFeed(farm.stockKg, farm.settings.feedUnit, farm.settings.defaultBagKg)} stock`}
-            </p>
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Scale className="size-3.5" />
-              {farm.latestWeight === null ? "Weight not recorded" : `${formatNumber(farm.latestWeight)} g latest sample`}
-            </p>
-          </SideQueue>
-        </div>
-      </section>
-
-      <section className="mt-4 grid items-start gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(16rem,0.7fr)]">
-        <Card className="rounded-[13px] shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
-          <CardContent className="space-y-3">
+          <p className="text-sm leading-relaxed text-muted-foreground">{meaning}</p>
+          <div className="grid grid-cols-2 gap-3 border-t pt-3 text-sm">
             <div>
-              <p className="text-sm font-bold">Water &amp; feed usage</p>
-              <p className="text-xs text-muted-foreground">Last 7 days, this batch.</p>
+              <p className="text-xs text-muted-foreground">Birds left</p>
+              <p className="text-lg font-bold tabular-nums">{formatNumber(farm.live)}</p>
             </div>
-            <BarTrend
-              data={trend}
-              series={[
-                { key: "water", label: "Water (L)", from: "#69b8a8", to: "#328b80" },
-                { key: "feed", label: "Feed (kg)", from: "#f0bf76", to: "#d08a35" },
-              ]}
-            />
-            {trend.every((day) => day.water === 0 && day.feed === 0) ? (
-              <p className="text-xs text-muted-foreground">No water or feed confirmed in the last 7 days.</p>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-3">
-          <Card className="rounded-[13px] border-[#cde6d6] bg-gradient-to-br from-[#e8f5ee] to-[#f7fbf8] shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="flex size-7 items-center justify-center rounded-[9px] bg-[#d9eedc] text-[#4f9569]">
-                  <Sparkles className="size-3.5" />
-                </span>
-              </div>
-              <p className="text-base leading-snug font-semibold text-[#17231f]">
-                {topAlert ? topAlert.title : "No open alerts right now."}
+            <div>
+              <p className="text-xs text-muted-foreground">Morning round</p>
+              <p className="text-lg font-bold">{roundLabel}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Deaths today</p>
+              <p className="text-lg font-bold tabular-nums">
+                {farm.todayMortality === null ? "—" : showCount(farm.todayMortality)}
               </p>
-              <p className="text-xs leading-relaxed text-[#657b6b]">
-                {topAlert ? topAlert.why : "Keep recording daily rounds to catch risks early."}
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Feed runway</p>
+              <p className="text-lg font-bold">{runway}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* One alert */}
+      <Card className="mb-3">
+        <CardContent className="space-y-2 pt-5">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Needs attention
+          </p>
+          {topAlert ? (
+            <>
+              <p className="flex items-start gap-2 text-base font-semibold">
+                <AlertTriangle
+                  className={cn(
+                    "mt-0.5 size-4 shrink-0",
+                    topAlert.severity === "urgent" ? "text-orange-600" : "text-amber-600",
+                  )}
+                  aria-hidden
+                />
+                <span>{topAlert.title}</span>
               </p>
-              {topAlert ? (
-                <Link
-                  to="/alerts"
-                  className="inline-block border-t border-[#d8e6da] pt-2.5 text-xs font-semibold text-[#087f73]"
-                >
-                  View alert
-                </Link>
-              ) : null}
-            </CardContent>
-          </Card>
+              <p className="text-sm text-muted-foreground">{topAlert.why}</p>
+              <Button asChild variant="outline" className="mt-1 h-12 w-full">
+                <Link to="/alerts">Open alerts</Link>
+              </Button>
+            </>
+          ) : (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />
+              No open alerts. Keep logging the morning round.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-          <Card className="rounded-[13px] shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
-            <CardContent className="space-y-1">
-              <p className="pb-1 text-sm font-bold">Recent activity</p>
-              {activity.length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground">Nothing recorded yet.</p>
-              ) : (
-                activity.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2.5 border-t py-2.5 first:border-t-0">
-                    <span
-                      className={cn(
-                        "flex size-7 shrink-0 items-center justify-center rounded-[8px]",
-                        item.sync === "synced" ? "bg-[#edf4ef] text-[#477259]" : "bg-[#fff3df] text-[#b8670b]",
-                      )}
-                    >
-                      {item.sync === "synced" ? <Wifi className="size-3.5" /> : <CloudOff className="size-3.5" />}
-                    </span>
-                    <p className="min-w-0 flex-1 truncate text-xs text-foreground">{item.label}</p>
-                    <span className="shrink-0 text-[10px] text-muted-foreground">{formatDay(item.date)}</span>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <p className="mt-4 rounded-[13px] border border-border bg-card px-4 py-3.5 text-sm text-muted-foreground shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
-        {canSeeFinance(farm.role) ? (
-          <>
-            Recorded cost <span className="font-semibold text-foreground">{formatInr(finance.recordedCost)}</span>.
-            Supplier due <span className="font-semibold text-orange-600">{formatInr(finance.supplierDue)}</span>.
-            Estimated net <span className="font-semibold text-foreground">{formatInr(finance.estimatedNet)}</span>, partial until this batch has a sale.
-          </>
-        ) : (
-          <>Money stays with the owner. This view shows birds, feed, and tasks only.</>
-        )}
+      {/* Primary CTA */}
+      <Button asChild className="mb-3 h-14 w-full text-base">
+        <Link to="/record">
+          <ClipboardCheck className="size-5" aria-hidden />
+          {roundDone ? "Review morning round" : "Log morning round"}
+        </Link>
+      </Button>
+      <p className="mb-6 text-center text-xs text-muted-foreground">
+        Enter deaths and feed — under a minute. Optional fields can wait.
       </p>
-    </div>
-  )
-}
 
-function SideQueue({
-  title,
-  count,
-  hint,
-  tone = "default",
-  children,
-}: {
-  title: string
-  count: string | number
-  hint: string
-  tone?: "default" | "alert"
-  children: ReactNode
-}) {
-  return (
-    <Card className="rounded-[13px] shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
-      <CardContent className="space-y-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-bold">{title}</p>
-          <p className={cn("text-sm font-bold tabular-nums", tone === "alert" ? "text-orange-600" : "text-muted-foreground")}>{count}</p>
-        </div>
-        <p className="text-xs text-muted-foreground">{hint}</p>
-        <div className="space-y-1.5 pt-1">{children}</div>
-      </CardContent>
-    </Card>
+      <div className="flex flex-wrap gap-2">
+        <Button asChild variant="outline" className="h-12 flex-1">
+          <Link to="/batches">View flocks</Link>
+        </Button>
+        <Button asChild variant="outline" className="h-12 flex-1">
+          <Link to="/tasks">Tasks</Link>
+        </Button>
+      </div>
+
+      {farm.stockKg !== null ? (
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Feed on hand:{" "}
+          {formatFeed(farm.stockKg, farm.settings.feedUnit, farm.settings.defaultBagKg)}
+        </p>
+      ) : null}
+    </div>
   )
 }
 
 function DashboardEmptyState() {
   const farm = useFarm()
   return (
-    <div>
+    <div className="mx-auto max-w-lg">
       <PageHeader
         eyebrow={farm.settings.location || "Your farm"}
-        title="What needs you now"
-        description="No batch yet · breed not recorded."
+        title="Today"
+        description="No flock yet — add one to see status."
       />
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ColorStat label="Live birds" value={showCount(null)} hint="No batch recorded yet." icon={Bird} swatch="blue" />
-        <ColorStat label="Recorded today" value={showCount(null)} hint="Mortality not recorded." icon={CheckCircle2} swatch="teal" />
-        <ColorStat label="Your turn" value={String(farm.tasks.filter((task) => task.status !== "resolved").length)} hint="Open tasks waiting on this farm." icon={ClipboardCheck} swatch="purple" />
-        <ColorStat label="At risk" value={showCount(null)} hint="No flock data to assess yet." icon={AlertTriangle} swatch="amber" />
-      </section>
-      <Card className="mt-5 rounded-[13px] shadow-[0_7px_20px_rgba(33,61,46,0.045)]">
+      <Card>
         <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-[#e5f5ef] text-[#0e9a6e]">
-            <Bird className="size-6" />
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+            <Bird className="size-6" aria-hidden />
           </span>
           <div className="max-w-md space-y-1.5">
-            <p className="text-base font-bold tracking-tight">Create your first batch</p>
+            <p className="text-base font-bold tracking-tight">Create your first flock</p>
             <p className="text-sm text-muted-foreground">
-              Your farm is set up, but there is no flock recorded yet. Add a batch to start
-              tracking mortality, feed, and water. Flock values stay Not recorded until then.
+              Add a flock (batch) to track deaths, feed, and status. Until then, Today stays empty.
             </p>
           </div>
-          <Button
-            asChild
-            className="h-11 rounded-full bg-primary text-primary-foreground shadow-[0_7px_16px_rgba(8,127,115,0.18)] hover:bg-primary/90"
-          >
-            <Link to="/batches/placement">Create your first batch</Link>
+          <Button asChild className="h-14 px-6 text-base">
+            <Link to="/batches/placement">Create first flock</Link>
           </Button>
         </CardContent>
       </Card>

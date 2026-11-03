@@ -28,5 +28,6 @@ Canonical docs for Poultry Intelligence Hub. Start with [getting-started](./gett
 - [FASTAPI_SETUP](./engineering/FASTAPI_SETUP.md) — setup notes (see as-built banner)
 - [CI-CD](./ops/CI-CD.md)
 - [MARKETING_SITE_PLAN](./product/MARKETING_SITE_PLAN.md)
+- [UI_INFORMATION_ARCHITECTURE](./product/UI_INFORMATION_ARCHITECTURE.md) — pages, data, charts vs current UI
 
 Root AI instructions for coding agents: [`../AGENTS.md`](../AGENTS.md).

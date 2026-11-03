@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { Bird, Droplets, Wheat } from "lucide-react"
+import { Bird, Wheat } from "lucide-react"
 import { ColorStat } from "@/components/farm/color"
 import { PageHeader, SyncBadge } from "@/components/farm/chrome"
 import { formatNumber, showCount, todayISO } from "@/domain/format"
@@ -39,9 +39,10 @@ const schema = z
     healthNote: z.string(),
   })
   .superRefine((value, ctx) => {
+    // U1: deaths + feed are the morning habit (required unless marked Not recorded).
     checkNumber(value.mortalityMissing, value.mortality, "mortality", true, ctx)
-    checkNumber(value.cullsMissing, value.culls, "culls", true, ctx)
     checkNumber(value.feedMissing, value.feedKg, "feedKg", false, ctx)
+    checkNumber(value.cullsMissing, value.culls, "culls", true, ctx)
     checkNumber(value.waterMissing, value.waterLitres, "waterLitres", false, ctx)
   })
 
@@ -160,10 +161,13 @@ export function DailyRoundForm({
   }
 
   const guidance = (
-    <div className="space-y-2 text-sm">
-      <p className="rounded-xl bg-amber-50 px-3 py-2 text-amber-900">Drafts stay on the round and do not change live birds or stock.</p>
-      <p className="rounded-xl bg-sky-50 px-3 py-2 text-sky-950">A saved number replaces the previous fact for this round and keeps the correction on the same record.</p>
-      <p className="rounded-xl bg-emerald-50 px-3 py-2 text-emerald-950">Feed issued here is consumption. Spill and damage are recorded on Feed &amp; Inventory.</p>
+    <div className="space-y-2 text-sm text-muted-foreground">
+      <p>
+        <span className="font-semibold text-foreground">Required habit:</span> Deaths and feed.
+        Aim for under a minute.
+      </p>
+      <p>Drafts stay on this device and do not change live birds or stock.</p>
+      <p>Feed here is what birds ate. Spill and damage go under Feed &amp; Inventory.</p>
     </div>
   )
 
@@ -190,68 +194,83 @@ export function DailyRoundForm({
           </Select>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <CountField
-          label="Mortality"
-          unit="birds"
-          missing={form.watch("mortalityMissing")}
-          value={form.watch("mortality")}
-          error={form.formState.errors.mortality?.message}
-          onMissing={(missing) => form.setValue("mortalityMissing", missing)}
-          onValue={(value) => form.setValue("mortality", value)}
-        />
-        <CountField
-          label="Culls"
-          unit="birds"
-          missing={form.watch("cullsMissing")}
-          value={form.watch("culls")}
-          error={form.formState.errors.culls?.message}
-          onMissing={(missing) => form.setValue("cullsMissing", missing)}
-          onValue={(value) => form.setValue("culls", value)}
-        />
-        <CountField
-          label="Feed used"
-          unit="kg"
-          missing={form.watch("feedMissing")}
-          value={form.watch("feedKg")}
-          error={form.formState.errors.feedKg?.message}
-          onMissing={(missing) => form.setValue("feedMissing", missing)}
-          onValue={(value) => form.setValue("feedKg", value)}
-        />
-        <CountField
-          label="Water used"
-          unit="L"
-          missing={form.watch("waterMissing")}
-          value={form.watch("waterLitres")}
-          error={form.formState.errors.waterLitres?.message}
-          onMissing={(missing) => form.setValue("waterMissing", missing)}
-          onValue={(value) => form.setValue("waterLitres", value)}
-        />
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Morning log (required)
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <CountField
+            label="Deaths"
+            unit="birds"
+            missing={form.watch("mortalityMissing")}
+            value={form.watch("mortality")}
+            error={form.formState.errors.mortality?.message}
+            onMissing={(missing) => form.setValue("mortalityMissing", missing)}
+            onValue={(value) => form.setValue("mortality", value)}
+          />
+          <CountField
+            label="Feed used"
+            unit="kg"
+            missing={form.watch("feedMissing")}
+            value={form.watch("feedKg")}
+            error={form.formState.errors.feedKg?.message}
+            onMissing={(missing) => form.setValue("feedMissing", missing)}
+            onValue={(value) => form.setValue("feedKg", value)}
+          />
+        </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Choice
-          label="Flock observation"
-          value={form.watch("observation")}
-          options={["Active", "Quiet", "Huddling", "Uneven"]}
-          onChange={(value) => form.setValue("observation", value)}
-        />
-        <Choice
-          label="Shed condition"
-          value={form.watch("shedCondition")}
-          options={["Dry", "Damp", "Wet", "Caked"]}
-          onChange={(value) => form.setValue("shedCondition", value)}
-        />
-      </div>
-      <div className="grid gap-1.5">
-        <Label htmlFor="health-note">Optional health note</Label>
-        <Textarea id="health-note" className="min-h-20" {...form.register("healthNote")} />
-      </div>
+
+      <details className="rounded-xl border px-3 py-2">
+        <summary className="cursor-pointer py-2 text-sm font-semibold">
+          Optional details
+        </summary>
+        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <CountField
+            label="Culls"
+            unit="birds"
+            missing={form.watch("cullsMissing")}
+            value={form.watch("culls")}
+            error={form.formState.errors.culls?.message}
+            onMissing={(missing) => form.setValue("cullsMissing", missing)}
+            onValue={(value) => form.setValue("culls", value)}
+          />
+          <CountField
+            label="Water used"
+            unit="L"
+            missing={form.watch("waterMissing")}
+            value={form.watch("waterLitres")}
+            error={form.formState.errors.waterLitres?.message}
+            onMissing={(missing) => form.setValue("waterMissing", missing)}
+            onValue={(value) => form.setValue("waterLitres", value)}
+          />
+        </div>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Choice
+            label="Flock observation"
+            value={form.watch("observation")}
+            options={["Active", "Quiet", "Huddling", "Uneven"]}
+            onChange={(value) => form.setValue("observation", value)}
+          />
+          <Choice
+            label="Shed condition"
+            value={form.watch("shedCondition")}
+            options={["Dry", "Damp", "Wet", "Caked"]}
+            onChange={(value) => form.setValue("shedCondition", value)}
+          />
+        </div>
+        <div className="mt-3 grid gap-1.5">
+          <Label htmlFor="health-note">Health note</Label>
+          <Textarea id="health-note" className="min-h-20" {...form.register("healthNote")} />
+        </div>
+      </details>
+
       {isDialog ? guidance : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" value="save" className="h-12 px-5">
+        <Button type="submit" value="save" className="h-14 min-w-40 px-6 text-base">
           Save round
         </Button>
-        <Button type="submit" value="draft" variant="outline" className="h-12 px-5">
+        <Button type="submit" value="draft" variant="outline" className="h-14 px-5">
           Save draft
         </Button>
       </div>
@@ -278,8 +297,10 @@ export function DailyRoundForm({
         <>
           <Card>
             <CardHeader>
-              <CardTitle>{farm.batch?.code}</CardTitle>
-              <CardDescription>Large fields, one sitting. Aim for under a minute.</CardDescription>
+              <CardTitle>{farm.batch?.code ?? "Flock"}</CardTitle>
+              <CardDescription>
+                Deaths and feed first. Optional details stay collapsed.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">{fields}</CardContent>
           </Card>
@@ -301,11 +322,41 @@ export function DailyRoundForm({
           <SyncBadge status={savedSync} />
         </div>
       ) : null}
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ColorStat label="Mortality today" value={showCount(farm.todayMortality)} hint="Blank stays Not recorded." tone={farm.todayMortality !== null && farm.todayMortality > 15 ? "alert" : farm.todayMortality === 0 ? "good" : "default"} swatch="rose" icon={Bird} />
-        <ColorStat label="Live birds" value={formatNumber(farm.live)} hint={`Day ${farm.day} · ${farm.batch?.code ?? "no batch"}`} tone="good" swatch="teal" icon={Bird} />
-        <ColorStat label="Feed stock" value={`${formatNumber(farm.stockKg)} kg`} hint={farm.runwayDays === null ? "Runway unknown." : `${formatNumber(farm.runwayDays, 1)} days of runway.`} tone={farm.runwayDays !== null && farm.runwayDays < 7 ? "alert" : "good"} swatch="amber" icon={Wheat} />
-        <ColorStat label="Latest water" value={farm.todayRound?.waterLitres == null ? "Not recorded" : `${formatNumber(farm.todayRound.waterLitres)} L`} hint="From today's round, if saved." swatch="blue" icon={Droplets} />
+      <section className="grid gap-3 sm:grid-cols-3">
+        <ColorStat
+          label="Deaths today"
+          value={showCount(farm.todayMortality)}
+          hint="From the morning log."
+          tone={
+            farm.todayMortality !== null && farm.todayMortality > 15
+              ? "alert"
+              : farm.todayMortality === 0
+                ? "good"
+                : "default"
+          }
+          swatch="rose"
+          icon={Bird}
+        />
+        <ColorStat
+          label="Birds left"
+          value={formatNumber(farm.live)}
+          hint={`Day ${farm.day} · ${farm.batch?.code ?? "no flock"}`}
+          tone="good"
+          swatch="teal"
+          icon={Bird}
+        />
+        <ColorStat
+          label="Feed stock"
+          value={`${formatNumber(farm.stockKg)} kg`}
+          hint={
+            farm.runwayDays === null
+              ? "Runway unknown."
+              : `${formatNumber(farm.runwayDays, 1)} days of runway.`
+          }
+          tone={farm.runwayDays !== null && farm.runwayDays < 7 ? "alert" : "good"}
+          swatch="amber"
+          icon={Wheat}
+        />
       </section>
       {formEl}
     </div>
@@ -321,9 +372,9 @@ export function DailyRoundPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Farm work"
-        title="Daily Farm Round"
-        description="Count what you saw. Zero means you counted none. Not recorded means you have not entered it yet."
+        eyebrow="Morning habit"
+        title="Log morning round"
+        description="Deaths and feed first. Zero means you counted none. Not recorded means you skipped that field."
         action={existing?.sync ? <SyncBadge status={existing.sync} /> : null}
       />
       <DailyRoundForm variant="page" />
@@ -355,7 +406,7 @@ function CountField({
   onValue: (value: string) => void
 }) {
   return (
-    <div className={`rounded-xl border border-l-4 p-3 ${label.startsWith("Mortality") ? "border-l-rose-400" : label.startsWith("Culls") ? "border-l-amber-400" : label.startsWith("Feed") ? "border-l-emerald-400" : "border-l-sky-400"}`}>
+    <div className={`rounded-xl border border-l-4 p-3 ${label.startsWith("Deaths") || label.startsWith("Mortality") ? "border-l-rose-400" : label.startsWith("Culls") ? "border-l-amber-400" : label.startsWith("Feed") ? "border-l-emerald-400" : "border-l-sky-400"}`}>
       <div className="mb-2 flex items-center justify-between gap-3">
         <Label>{label}</Label>
         <label className="flex items-center gap-2 text-xs font-medium">
