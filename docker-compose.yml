@@ -62,9 +62,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-pih}@postgres:5432/${POSTGRES_DB:-pih}
+      # pih_app has no BYPASSRLS — created in migration 0009
+      DATABASE_URL: postgresql://pih_app:${PIH_APP_PASSWORD:-pih_app}@postgres:5432/${POSTGRES_DB:-pih}
       JWT_SECRET: ${JWT_SECRET:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
     ports:
       - "8000:8000"
 
@@ -75,7 +77,8 @@ services:
         condition: service_healthy
     environment:
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-pih}@postgres:5432/${POSTGRES_DB:-pih}
+      DATABASE_URL: postgresql://pih_app:${PIH_APP_PASSWORD:-pih_app}@postgres:5432/${POSTGRES_DB:-pih}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
 
 volumes:
   pgdata:

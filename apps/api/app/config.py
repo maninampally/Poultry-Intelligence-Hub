@@ -38,6 +38,18 @@ class Settings(BaseSettings):
             return ["*"]
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
+    @property
+    def allows_unverified_jwt(self) -> bool:
+        """Dev-only: empty JWT_SECRET is permitted in local/dev/test."""
+        return self.environment.strip().lower() in {"local", "dev", "test"}
+
+    def validate_security(self) -> None:
+        """Fail closed outside local: JWT_SECRET must be configured."""
+        if not self.allows_unverified_jwt and not self.jwt_secret.strip():
+            raise RuntimeError(
+                "JWT_SECRET must be set when ENVIRONMENT is not local/dev/test"
+            )
+
 
 @lru_cache
 def get_settings() -> Settings:

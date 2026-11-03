@@ -41,16 +41,21 @@ async def get_auth(
 ) -> AuthContext:
     token = _extract_bearer(authorization)
     try:
-        if settings.jwt_secret:
+        if settings.jwt_secret.strip():
             claims = jwt.decode(
                 token,
                 settings.jwt_secret,
                 algorithms=[settings.jwt_algorithm],
                 audience=settings.jwt_audience,
             )
-        else:
+        elif settings.allows_unverified_jwt:
             # Dev fallback: no secret configured -> decode unverified.
             claims = jwt.get_unverified_claims(token)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="JWT_SECRET is not configured",
+            )
     except JWTError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

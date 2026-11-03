@@ -38,6 +38,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    settings.validate_security()
     app = FastAPI(
         title="Poultry Intelligence Hub API",
         version="0.1.0",

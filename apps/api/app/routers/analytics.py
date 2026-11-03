@@ -42,6 +42,14 @@ async def flock_metrics(
 
         total_deaths = await conn.fetchval("select app_flock_mortality($1)", flock_id)
         total_feed = await conn.fetchval("select app_flock_feed_kg($1)", flock_id)
+        birds_sold = await conn.fetchval(
+            """
+            select coalesce(sum(birds_lifted), 0)::integer
+            from lifting_events
+            where flock_id = $1 and deleted_at is null
+            """,
+            flock_id,
+        )
         latest_weight = await conn.fetchval(
             """
             select avg_weight_kg from weight_records
@@ -54,6 +62,7 @@ async def flock_metrics(
     placed = flock["birds_placed"] or 0
     deaths = int(total_deaths or 0)
     feed_kg = float(total_feed or 0)
+    sold = int(birds_sold or 0)
     birds = current_birds(placed, deaths) if placed else 0
 
     age = None
@@ -69,14 +78,18 @@ async def flock_metrics(
         gain = total_live_weight - (0.045 * placed)  # PLACEHOLDER chick weight
         provisional_fcr = fcr(feed_kg, gain) if gain and gain > 0 else None
 
+    # Livability = sold / placed (post-lifting). Null until at least one lift.
+    livability = livability_pct(sold, placed) if placed and sold > 0 else None
+
     return {
         "flock_id": flock_id,
         "age_days": age,
         "birds_placed": placed,
         "current_birds": birds,
+        "birds_sold": sold,
         "total_mortality": deaths,
         "mortality_pct": mortality_pct(deaths, placed) if placed else None,
-        "livability_pct": livability_pct(birds, placed) if placed else None,
+        "livability_pct": livability,
         "avg_weight_kg": avg_w,
         "total_feed_kg": feed_kg,
         "provisional_fcr": provisional_fcr,
