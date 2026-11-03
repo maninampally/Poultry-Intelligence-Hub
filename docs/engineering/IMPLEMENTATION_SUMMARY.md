@@ -105,9 +105,9 @@ Production-ready containerization with full orchestration.
 - `.env.example` — Updated with DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS
 
 **Documentation:**
-- `docs/FASTAPI_SETUP.md` — Complete setup, API docs, sync protocol, troubleshooting
-- `docs/DATABASE_LAYER_IMPLEMENTATION.md` — Schema + migration details
-- `docs/SYSTEM_DESIGN.md` — Architecture for 100k+ farmers
+- `docs/engineering/FASTAPI_SETUP.md` — Complete setup, API docs, sync protocol, troubleshooting
+- `docs/engineering/DATABASE_LAYER_IMPLEMENTATION.md` — Schema + migration details
+- `docs/architecture/SYSTEM_DESIGN.md` — Architecture for 100k+ farmers
 - `README.md` — Quick start guide
 
 ---
@@ -265,9 +265,9 @@ For 100,000 farmers (20,000 peak morning round @ 06:00–09:00 IST):
 
 ## 🔗 Related Docs
 
-- [`docs/SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md) — Full system architecture, growth phases, security
-- [`docs/DATABASE_LAYER_IMPLEMENTATION.md`](DATABASE_LAYER_IMPLEMENTATION.md) — Schema, migrations, data model
-- [`docs/FASTAPI_SETUP.md`](FASTAPI_SETUP.md) — API docs, local setup, troubleshooting
+- [`docs/architecture/SYSTEM_DESIGN.md`](../architecture/SYSTEM_DESIGN.md) — Full system architecture, growth phases, security
+- [`docs/engineering/DATABASE_LAYER_IMPLEMENTATION.md`](DATABASE_LAYER_IMPLEMENTATION.md) — Schema, migrations, data model
+- [`docs/engineering/FASTAPI_SETUP.md`](FASTAPI_SETUP.md) — API docs, local setup, troubleshooting
 - [`README.md`](../README.md) — Quick start, stack overview
 - [`DOCKER.md`](../DOCKER.md) — Docker build, run, debugging
 
@@ -345,8 +345,8 @@ client/src/
 .env.example              # Updated with API/Redis vars
 docker-compose.yml              # 5 services (Postgres, Redis, FastAPI, Worker, Web)
 requirements.txt            # Python dependencies
-docs/FASTAPI_SETUP.md       # Complete API guide  
-docs/IMPLEMENTATION_SUMMARY.md # This file
+docs/engineering/FASTAPI_SETUP.md       # Complete API guide  
+docs/engineering/IMPLEMENTATION_SUMMARY.md # This file
 ```
 
 ---

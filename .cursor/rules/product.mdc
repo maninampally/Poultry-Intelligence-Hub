@@ -1,0 +1,35 @@
+---
+description: Poultry Intelligence Hub product rules and coding constraints
+alwaysApply: true
+---
+
+# Poultry Intelligence Hub — product rules
+
+Follow the full instructions in `AGENTS.md` at the repository root. Summary:
+
+## Product
+Mobile-first app for Indian broiler farmers. Turn farm data into clear decisions within 5–10 seconds of opening the app. Show numbers with meaning (e.g. "4.2% above expected"), not raw statistics. No decorative charts, gradients, glass effects, or fake-futuristic AI visuals.
+
+## Hard rules
+1. No hard-coded colors, sizes, or font sizes — theme tokens only.
+2. No hard-coded user-facing text — everything through i18n (`t('key')`).
+3. Layouts must grow; do not truncate important labels.
+4. Touch targets ≥ 48px; primary actions ≥ 56px.
+5. Status is never color alone — always icon + word (Normal / Watch / Act).
+6. Offline first — local SQLite then sync queue; every record shows sync state.
+7. Money is integer **paise**, formatted for display only (Indian grouping).
+8. Calculations are deterministic code; the LLM may only explain results.
+9. Plain language; explain FCR in one line the first time it appears.
+10. Accessibility: labels on interactive elements; WCAG AA contrast.
+
+## Structure
+- `apps/web/` — Vite React browser UI
+- `apps/api/` — FastAPI backend
+- `apps/mobile/` — Expo app
+- `apps/worker/` — Celery worker
+- `supabase/` — Postgres migrations + RLS
+- `design/` — design tokens
+- `docs/` — organized documentation (see `docs/README.md`)
+
+## Working style
+Small reviewable changes. Test pure calculation functions. Ask when requirements conflict with these rules. Never invent farm data in production code.

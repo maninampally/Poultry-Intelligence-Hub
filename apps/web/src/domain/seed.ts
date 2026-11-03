@@ -526,10 +526,10 @@ export function createSeed(): FarmState {
       },
     ],
     team: [
-      { id: "user-owner", name: "Manikanth", role: "owner", shed: "All sheds", status: "active", passcode: "Mani@12345" },
-      { id: "user-manager", name: "Arun Selvam", role: "manager", shed: "All sheds", status: "active", passcode: "demo1234" },
-      { id: "user-k", name: "Karthik R.", role: "worker", shed: "Shed A · East", status: "active", passcode: "demo1234" },
-      { id: "user-d", name: "Divya M.", role: "worker", shed: "Shed B · West", status: "active", passcode: "demo1234" },
+      { id: "user-owner", name: "Manikanth", role: "owner", shed: "All sheds", status: "active", passcode: "Mani@12345", personalNotifications: true, language: "English" },
+      { id: "user-manager", name: "Arun Selvam", role: "manager", shed: "All sheds", status: "active", passcode: "demo1234", personalNotifications: true, language: "English" },
+      { id: "user-k", name: "Karthik R.", role: "worker", shed: "Shed A · East", status: "active", passcode: "demo1234", personalNotifications: true, language: "English" },
+      { id: "user-d", name: "Divya M.", role: "worker", shed: "Shed B · West", status: "active", passcode: "demo1234", personalNotifications: true, language: "English" },
     ],
     sops: [
       {

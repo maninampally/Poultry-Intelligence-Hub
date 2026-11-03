@@ -440,11 +440,11 @@ _________________________________________________________________
 ## 10. Quick Reference Links
 
 - **GitHub Actions Setup:** See `.github/workflows/ci.yml` and `.github/workflows/cd.yml`
-- **CI/CD Documentation:** See `docs/CI-CD.md`
+- **CI/CD Documentation:** See `docs/ops/CI-CD.md`
 - **Deployment Scripts:** `scripts/deploy-staging.sh` and `scripts/deploy-production.sh`
 - **Environment Template:** `.env.example` and `.env.production`
 - **Docker Configuration:** `docker-compose.yml` and `docker-compose.production.yml`
-- **System Design:** `docs/SYSTEM_DESIGN.md`
+- **System Design:** `../architecture/SYSTEM_DESIGN.md`
 
 ---
 

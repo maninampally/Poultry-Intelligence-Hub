@@ -215,9 +215,9 @@ Poultry-Intelligence-Hub/
 ## Next Steps
 
 1. **Explore the API** → http://localhost:8000/docs (interactive OpenAPI)
-2. **Read the docs** → `docs/FASTAPI_SETUP.md` for full reference
+2. **Read the docs** → `docs/engineering/FASTAPI_SETUP.md` for full reference
 3. **Test sync flow** → Create batch → Add mortality → Check sync push/pull
-4. **Check system design** → `docs/SYSTEM_DESIGN.md` for architecture
+4. **Check system design** → `../architecture/SYSTEM_DESIGN.md` for architecture
 5. **Monitor worker** → `pip install flower && flower -A worker.celery_app` (http://localhost:5555)
 
 ---
@@ -247,7 +247,7 @@ VITE_API_URL=http://localhost:8000
 
 ## Running in Production
 
-For AWS/Render/etc., see `docs/FASTAPI_SETUP.md` → "Production deployment" section.
+For AWS/Render/etc., see `docs/engineering/FASTAPI_SETUP.md` → "Production deployment" section.
 
 Quick summary:
 - Use managed Postgres (Supabase, AWS RDS)

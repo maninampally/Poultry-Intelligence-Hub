@@ -6,13 +6,13 @@ situation within 5–10 seconds of opening the app.
 
 This repository contains the **scaffold** for the backend, database, and
 mobile frontend, built to the design documented in
-[`AGENTS.md`](./AGENTS.md), [`docs/`](./docs), and the product-direction docs.
+[`AGENTS.md`](./AGENTS.md), [`docs/`](./docs/README.md), and the product-direction docs.
 
 ---
 
 ## Architecture
 
-A modular monolith (see `docs/SYSTEM_DESIGN.md` and the Production Direction):
+A modular monolith (see `docs/architecture/SYSTEM_DESIGN.md` and the Production Direction):
 
 ```
 Expo React Native (SQLite, offline-first)
@@ -50,8 +50,10 @@ apps/
 supabase/
   migrations/ Ordered SQL migrations (0001..0008)
   test/       Auth stub + migration/RLS smoke tests
-docs/         Data model, system design, sync protocol, architecture
+docs/         Organized docs (getting-started, architecture, engineering, ops, product, ai)
 design/       pih-design-tokens.json (design system source of truth)
+.cursor/rules/ Cursor project rules for AI agents
+AGENTS.md     Root AI coding-agent instructions
 docker-compose.yml   Local dev: postgres, redis, api, worker, migrate
 ```
 

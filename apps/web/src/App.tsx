@@ -43,8 +43,18 @@ import {
   SopsPage,
   TeamPage,
 } from "@/pages/more"
-import { PageHeader } from "@/components/farm/chrome"
 import { LandingPage } from "@/pages/landing"
+import {
+  AboutPage,
+  ContactPage,
+  DemoPage,
+  FaqPage,
+  FeaturesPage,
+  NotFoundPage,
+  PricingPage,
+  PrivacyPage,
+  TermsPage,
+} from "@/pages/marketing"
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const farm = useFarm()
@@ -58,6 +68,14 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="features" element={<FeaturesPage />} />
+          <Route path="pricing" element={<PricingPage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="contact" element={<ContactPage />} />
+          <Route path="demo" element={<DemoPage />} />
+          <Route path="faq" element={<FaqPage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
+          <Route path="terms" element={<TermsPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route
             path="onboarding"
@@ -104,8 +122,8 @@ export default function App() {
             <Route path="more/export" element={<ExportPage />} />
             <Route path="more/settings" element={<SettingsPage />} />
             <Route path="more/help" element={<HelpPage />} />
-            <Route path="*" element={<PageHeader title="Page not found" description="That screen is not part of this farm." />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster />

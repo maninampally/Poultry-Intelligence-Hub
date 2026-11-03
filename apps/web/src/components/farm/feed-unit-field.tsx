@@ -17,6 +17,7 @@ export function FeedUnitField({
   onFeedUnitChange,
   onBagSizeChange,
   bagSizeError,
+  disabled = false,
 }: {
   idPrefix: string
   feedUnit: FeedUnit
@@ -24,6 +25,7 @@ export function FeedUnitField({
   onFeedUnitChange: (unit: FeedUnit) => void
   onBagSizeChange: (value: string) => void
   bagSizeError?: string
+  disabled?: boolean
 }) {
   const bagSizeId = `${idPrefix}-bag-size`
   return (
@@ -44,11 +46,12 @@ export function FeedUnitField({
               role="radio"
               aria-checked={active}
               onClick={() => onFeedUnitChange(choice.value)}
+              disabled={disabled}
               className={cn(
-                "flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition-colors",
+                "flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-100",
                 active
                   ? "border-primary bg-accent text-accent-foreground"
-                  : "border-border text-foreground hover:bg-muted",
+                  : cn("border-border text-foreground hover:bg-muted", disabled ? "bg-background" : "bg-accent/35"),
               )}
             >
               <Icon className="size-4" aria-hidden="true" />
@@ -63,10 +66,11 @@ export function FeedUnitField({
           <div className="relative">
             <Input
               id={bagSizeId}
-              className="h-12 pr-12"
+              className={`h-12 pr-12 text-foreground disabled:opacity-100 disabled:text-foreground ${disabled ? "bg-background" : "bg-accent/35"}`}
               inputMode="decimal"
               value={bagSize}
               onChange={(event) => onBagSizeChange(event.target.value)}
+              disabled={disabled}
               aria-invalid={bagSizeError ? true : undefined}
               aria-describedby={bagSizeError ? `${bagSizeId}-error` : undefined}
               aria-label="Default bag size in kilograms"

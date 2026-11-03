@@ -1,0 +1,14 @@
+---
+description: Canonical workspace path and guidance sources for this repo
+alwaysApply: true
+---
+
+# Workspace environment
+
+- Canonical working copy: `/home/mani/projects/Poultry-Intelligence-Hub` (Ubuntu/WSL).
+- Do not assume a separate Windows checkout unless the user says so.
+- Primary guidance: `AGENTS.md`, `README.md`, and `docs/getting-started/PROJECT_STRUCTURE.md`.
+- Docs index: `docs/README.md`. AI tool map: `docs/ai/README.md`.
+- Apps: `apps/web/`, `apps/api/`, `apps/mobile/`, `apps/worker/`.
+- Before claiming files are inaccessible, inspect with `pwd`, `git status`, search, or reads.
+- If an error is reported without command/stack/file, ask for that diagnostic context.
