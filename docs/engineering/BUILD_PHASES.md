@@ -1,26 +1,26 @@
 # Build phases — path to a trustworthy offline farm OS
 
-> **Branch for Phase 0 work:** `feat/build-phases-p0-foundation`  
-> **As-built today:** schema + RLS SQL tests + thin FastAPI CRUD + deterministic analytics unit tests.  
-> **Not built yet:** sync apply path, Celery projections, CI, event ledger from `SYSTEM_DESIGN.md`.
+> **As-built overview:** [`AS_BUILT.md`](./AS_BUILT.md)  
+> Phases 0–4 live on feature branches (`feat/build-phases-p0-foundation` … `feat/phase-4-hardening-docs`).
 
-This plan is ordered for **shortest path to correct product behavior**. Do not jump to scale (100k farmers, event-ledger rewrite) until Phases 0–2 work on the current tables.
+This plan is ordered for **shortest path to correct product behavior**. Do not jump to scale (100k farmers, event-ledger rewrite) until Phases 0–2 are proven in use.
 
 ---
 
-## Reality check (baseline)
+## Reality check (after Phases 0–4)
 
 | Capability | Status |
 |------------|--------|
-| Migrations `0001–0008`, RLS helpers/policies, SQL RLS smoke test | Done |
-| FastAPI CRUD (auth bootstrap, farms, flocks, daily records, lifting) | Thin / done |
-| Analytics pure Python + unit tests | Done |
-| Analytics HTTP (`GET .../metrics`) | Partial (data-source gaps) |
-| Sync push/pull | Scaffold (log + delta SELECT; **no domain apply**) |
-| Celery worker | Noop scaffold |
-| Mobile/web → API | Not wired |
-| GitHub Actions CI | Missing (started in Phase 0) |
-| `farm_events` ledger in SYSTEM_DESIGN | Target architecture only — **not in schema** |
+| Migrations `0001`–`0011`, RLS + SQL smoke test | Done |
+| FastAPI CRUD + settlements/expenses | Done |
+| Shared `pih_analytics` + unit tests | Done |
+| Sync push apply (daily + mortality) + keyset pull | Done (Phase 1) |
+| Celery projections + mortality alerts | Done (Phase 2) |
+| Mobile `drainSyncQueue` helper | Done; UI session hook still open |
+| Web → API | Demo-only (explicit in README) |
+| GitHub Actions CI | Done (pytest, RLS, web build) |
+| Doc truth / health split / CORS+rate limit | Done (Phase 4) |
+| `farm_events` ledger | **Deferred** — see [`../architecture/EVENT_LEDGER_DECISION.md`](../architecture/EVENT_LEDGER_DECISION.md) |
 
 ---
 
@@ -94,12 +94,14 @@ This plan is ordered for **shortest path to correct product behavior**. Do not j
 
 **Goal:** Process speed and trust: docs match code; scale work is intentional.
 
-| # | Work item | Done when |
-|---|-----------|-----------|
-| 4.1 | Rewrite/archive stale sections in `IMPLEMENTATION_SUMMARY`, `FASTAPI_SETUP`, `SYNC_PROTOCOL` | Clear **as-built** vs **target** labels |
-| 4.2 | Response models (UUID→str), structured logging, liveness vs readiness | Clients don’t break on raw `dict(row)` |
-| 4.3 | Rate limiting, CORS lockdown for non-local | Staging checklist green |
-| 4.4 | Revisit event-ledger (`farm_events`) **only if** Phase 1–2 prove row-sync insufficient | Migration plan + dual-write strategy |
+**Branch:** `feat/phase-4-hardening-docs`
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 4.1 | Archive/redirect stale IMPLEMENTATION_SUMMARY; banner FASTAPI_SETUP + SYNC_PROTOCOL; add AS_BUILT | Clear as-built vs target | Done in branch |
+| 4.2 | `row_dict` on CRUD routers; JSON logging outside local; `/health/live` + `/ready` | Clients get string UUIDs; probes split | Done in branch |
+| 4.3 | Reject `ALLOWED_ORIGINS=*`; in-process rate limit when non-local | Staging cannot boot with open CORS | Done in branch |
+| 4.4 | Event ledger decision doc | Defer until row-sync proven insufficient | Done — deferred |
 
 ---
 

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app import db
 from app.auth import AuthContext, get_auth
+from app.serialize import row_dict
 
 router = APIRouter(prefix="/api/v1/farms", tags=["farms"])
 
@@ -34,7 +35,7 @@ async def list_farms(auth: AuthContext = Depends(get_auth)) -> list[dict]:
             order by created_at desc
             """
         )
-    return [dict(r) for r in rows]
+    return [row_dict(r) for r in rows]
 
 
 @router.post("", status_code=201)
@@ -53,7 +54,7 @@ async def create_farm(
             body.location,
             auth.user_id,
         )
-    return dict(row)
+    return row_dict(row)
 
 
 @router.post("/{farm_id}/sheds", status_code=201)
@@ -72,4 +73,4 @@ async def add_shed(
             body.name,
             body.capacity,
         )
-    return dict(row)
+    return row_dict(row)

@@ -22,8 +22,10 @@ Canonical docs for Poultry Intelligence Hub. Start with [getting-started](./gett
 - [DATA_MODEL](./architecture/DATA_MODEL.md)
 - [SYNC_PROTOCOL](./architecture/SYNC_PROTOCOL.md)
 - [Advanced architecture v1.1](./architecture/poultry-intelligence-advanced-system-architecture-v1.1.md)
-- [BUILD_PHASES](./engineering/BUILD_PHASES.md) — ordered delivery plan (Phase 0+)
-- [FASTAPI_SETUP](./engineering/FASTAPI_SETUP.md)
+- [AS_BUILT](./engineering/AS_BUILT.md) — what the code actually ships
+- [BUILD_PHASES](./engineering/BUILD_PHASES.md) — ordered delivery plan (Phase 0–4)
+- [EVENT_LEDGER_DECISION](./architecture/EVENT_LEDGER_DECISION.md) — why `farm_events` is deferred
+- [FASTAPI_SETUP](./engineering/FASTAPI_SETUP.md) — setup notes (see as-built banner)
 - [CI-CD](./ops/CI-CD.md)
 - [MARKETING_SITE_PLAN](./product/MARKETING_SITE_PLAN.md)
 

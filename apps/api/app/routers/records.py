@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from app import db
 from app.auth import AuthContext, get_auth
 from app.jobs import enqueue_flock_rebuild
+from app.serialize import row_dict
 
 router = APIRouter(prefix="/api/v1/records", tags=["records"])
 
@@ -40,7 +41,7 @@ async def list_daily(
             """,
             flock_id,
         )
-    return [dict(r) for r in rows]
+    return [row_dict(r) for r in rows]
 
 
 @router.put("/daily")
@@ -70,4 +71,4 @@ async def upsert_daily(
             is_complete, auth.user_id,
         )
     enqueue_flock_rebuild(body.flock_id)
-    return dict(row)
+    return row_dict(row)

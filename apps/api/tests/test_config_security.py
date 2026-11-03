@@ -21,5 +21,9 @@ def test_production_requires_jwt_secret() -> None:
 
 
 def test_production_ok_with_jwt_secret() -> None:
-    s = Settings(environment="production", jwt_secret="test-secret")
+    s = Settings(
+        environment="production",
+        jwt_secret="test-secret",
+        allowed_origins="https://app.example.com",
+    )
     s.validate_security()
