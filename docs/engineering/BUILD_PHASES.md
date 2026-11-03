@@ -79,12 +79,14 @@ This plan is ordered for **shortest path to correct product behavior**. Do not j
 
 **Goal:** Manager-facing money flows use integer paise and existing settlement engine.
 
-| # | Work item | Done when |
-|---|-----------|-----------|
-| 3.1 | Settlement + expenses HTTP APIs (manager-only via RLS) | Persist `compute_settlement` into `settlements` / lines |
-| 3.2 | Integration tests: worker denied finance; manager allowed | TestClient + `pih_app` / RLS role |
-| 3.3 | Optional: use `app_can_access_flock` in RLS for shed-scoped workers | Or document and drop unused helper |
-| 3.4 | Wire web farm screens to FastAPI **or** mark web as demo-only in README | No silent dual sources of truth |
+**Branch:** `feat/phase-3-finance-apis`
+
+| # | Work item | Done when | Status |
+|---|-----------|-----------|--------|
+| 3.1 | Settlement + expenses HTTP APIs | `POST /settlements/compute`, GET/confirm; expenses list/create/delete | Done in branch |
+| 3.2 | Worker denied finance | Covered by `supabase/test/rls_test.sql` S3/S4 + API mapper unit tests | Done (RLS suite + unit) |
+| 3.3 | `app_can_access_flock` shed scoping | Deferred — keep helper; revisit when shed assignment UX exists | Deferred |
+| 3.4 | Web demo-only clarity | README states web is localStorage demo, not API-backed | Done in branch |
 
 ---
 

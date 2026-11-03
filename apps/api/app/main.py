@@ -13,11 +13,13 @@ from app.config import get_settings
 from app.routers import (
     analytics,
     auth as auth_router,
+    expenses,
     farms,
     flocks,
     health,
     lifting,
     records,
+    settlements,
     sync,
 )
 
@@ -57,6 +59,8 @@ def create_app() -> FastAPI:
     app.include_router(flocks.router)
     app.include_router(records.router)
     app.include_router(lifting.router)
+    app.include_router(settlements.router)
+    app.include_router(expenses.router)
     app.include_router(sync.router)
     app.include_router(analytics.router)
     return app
